@@ -7,7 +7,11 @@
 
 #include <utility>
 
+#include "bat/ledger/internal/contributions/contribution_fee_processor.h"
+#include "bat/ledger/internal/contributions/contribution_scheduler.h"
+#include "bat/ledger/internal/contributions/pending_contribution_processor.h"
 #include "bat/ledger/internal/core/bat_ledger_job.h"
+#include "bat/ledger/internal/core/job_store.h"
 #include "bat/ledger/internal/ledger_impl.h"
 #include "bat/ledger/internal/upgrades/upgrade_manager.h"
 
@@ -23,14 +27,15 @@ class LedgerImplInitializer : public BATLedgerContext::Object {
     auto* ledger = context().GetLedgerImpl();
 
     ledger->publisher()->SetPublisherServerListTimer();
-    ledger->contribution()->SetReconcileTimer();
+    // TODO(zenparsing): Handled by ContributionScheduler
+    // ledger->contribution()->SetReconcileTimer();
     ledger->promotion()->Refresh(false);
     ledger->contribution()->Initialize();
     ledger->promotion()->Initialize();
     ledger->api()->Initialize();
     ledger->recovery()->Check();
 
-    return MakeFuture(true);
+    return MakeReadyFuture(true);
   }
 };
 
@@ -65,7 +70,12 @@ class InitializeJob : public BATLedgerJob<bool> {
   }
 };
 
-using InitializeAllJob = InitializeJob<UpgradeManager, LedgerImplInitializer>;
+using InitializeAllJob = InitializeJob<UpgradeManager,
+                                       JobStore,
+                                       ContributionFeeProcessor,
+                                       PendingContributionProcessor,
+                                       ContributionScheduler,
+                                       LedgerImplInitializer>;
 
 }  // namespace
 

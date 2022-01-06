@@ -12,6 +12,7 @@
 
 #include "bat/ledger/global_constants.h"
 #include "bat/ledger/internal/constants.h"
+#include "bat/ledger/internal/contributions/contribution_token_manager.h"
 #include "bat/ledger/internal/ledger_impl.h"
 #include "bat/ledger/option_keys.h"
 
@@ -87,28 +88,18 @@ void WalletBalance::GetUnblindedTokens(
     return;
   }
 
-  auto tokens_callback = std::bind(&WalletBalance::OnGetUnblindedTokens,
-      this,
-      *balance,
-      callback,
-      _1);
-  ledger_->database()->GetSpendableUnblindedTokensByBatchTypes(
-      {type::CredsBatchType::PROMOTION},
-      tokens_callback);
-}
+  auto shared_balance = std::make_shared<decltype(balance)>(std::move(balance));
 
-void WalletBalance::OnGetUnblindedTokens(
-    type::Balance info,
-    ledger::FetchBalanceCallback callback,
-    type::UnblindedTokenList list) {
-  auto info_ptr = type::Balance::New(info);
-  double total = 0.0;
-  for (auto & item : list) {
-    total+=item->value;
-  }
-  info_ptr->total += total;
-  info_ptr->wallets.insert(std::make_pair(constant::kWalletUnBlinded, total));
-  ExternalWallets(std::move(info_ptr), callback);
+  ledger_->context()
+      .Get<ContributionTokenManager>()
+      .GetAvailableTokenBalance(ContributionTokenType::kVG)
+      .Then(callback_adapter_([this, shared_balance, callback](double balance) {
+        (*shared_balance)->total += balance;
+        (*shared_balance)
+            ->wallets.insert(
+                std::make_pair(constant::kWalletUnBlinded, balance));
+        ExternalWallets(std::move(*shared_balance), callback);
+      }));
 }
 
 void WalletBalance::ExternalWallets(

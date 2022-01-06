@@ -10,6 +10,9 @@
 #include "bat/ledger/internal/common/security_util.h"
 #include "bat/ledger/internal/common/time_util.h"
 #include "bat/ledger/internal/constants.h"
+#include "bat/ledger/internal/contributions/contribution_router.h"
+#include "bat/ledger/internal/contributions/contribution_scheduler.h"
+#include "bat/ledger/internal/contributions/contribution_store.h"
 #include "bat/ledger/internal/core/bat_ledger_context.h"
 #include "bat/ledger/internal/core/bat_ledger_initializer.h"
 #include "bat/ledger/internal/core/sql_store.h"
@@ -168,7 +171,13 @@ void LedgerImpl::OneTimeTip(const std::string& publisher_key,
                             double amount,
                             ResultCallback callback) {
   WhenReady([this, publisher_key, amount, callback]() {
-    contribution()->OneTimeTip(publisher_key, amount, callback);
+    context()
+        .Get<ContributionRouter>()
+        .SendContribution(ContributionType::kOneTime, publisher_key, amount)
+        .Then(callback_adapter_([callback](bool success) {
+          callback(CallbackAdapter::ResultCode(success));
+        }));
+    // contribution()->OneTimeTip(publisher_key, amount, callback);
   });
 }
 
@@ -322,6 +331,7 @@ void LedgerImpl::GetActivityInfoList(uint32_t start,
 }
 
 void LedgerImpl::GetExcludedList(PublisherInfoListCallback callback) {
+  // TODO(zenparsing): Use ContributionStore instead.
   WhenReady([this, callback]() { database()->GetExcludedList(callback); });
 }
 
@@ -351,6 +361,7 @@ void LedgerImpl::SetAutoContributeEnabled(bool enabled) {
 }
 
 uint64_t LedgerImpl::GetReconcileStamp() {
+  // TODO(zenparsing): Use ContributionScheduler
   if (!IsReady())
     return 0;
 
@@ -457,6 +468,7 @@ type::AutoContributePropertiesPtr LedgerImpl::GetAutoContributeProperties() {
   props->contribution_min_visits = state()->GetPublisherMinVisits();
   props->contribution_non_verified = state()->GetPublisherAllowNonVerified();
   props->contribution_videos = state()->GetPublisherAllowVideos();
+  // TODO(zenparsing): Use ContributionScheduler
   props->reconcile_stamp = state()->GetReconcileStamp();
   return props;
 }
@@ -472,12 +484,20 @@ void LedgerImpl::SetPublisherExclude(const std::string& publisher_id,
                                      type::PublisherExclude exclude,
                                      ResultCallback callback) {
   WhenReady([this, publisher_id, exclude, callback]() {
+    bool enabled = exclude == type::PublisherExclude::EXCLUDED ? false : true;
+    context().Get<ContributionStore>().SetPublisherAutoContributeEnabled(
+        publisher_id, enabled);
+    // TODO(zenparsing): Remove this.
     publisher()->SetPublisherExclude(publisher_id, exclude, callback);
   });
 }
 
 void LedgerImpl::RestorePublishers(ResultCallback callback) {
-  WhenReady([this, callback]() { database()->RestorePublishers(callback); });
+  WhenReady([this, callback]() {
+    context().Get<ContributionStore>().ResetPublisherAutoContributeEnabled();
+    // TODO(zenparsing): Remove this.
+    database()->RestorePublishers(callback);
+  });
 }
 
 void LedgerImpl::GetPublisherActivityFromUrl(
@@ -501,6 +521,9 @@ void LedgerImpl::GetPublisherBanner(const std::string& publisher_id,
 void LedgerImpl::RemoveRecurringTip(const std::string& publisher_key,
                                     ResultCallback callback) {
   WhenReady([this, publisher_key, callback]() {
+    context().Get<ContributionStore>().DeleteRecurringContribution(
+        publisher_key);
+    // TODO(zenparsing): Remove this.
     database()->RemoveRecurringTip(publisher_key, callback);
   });
 }
@@ -514,6 +537,7 @@ uint64_t LedgerImpl::GetCreationStamp() {
 
 void LedgerImpl::HasSufficientBalanceToReconcile(
     HasSufficientBalanceToReconcileCallback callback) {
+  // TODO(zenparsing): We appear not to need this.
   WhenReady(
       [this, callback]() { contribution()->HasSufficientBalance(callback); });
 }
@@ -555,16 +579,21 @@ void LedgerImpl::GetRewardsInternalsInfo(
 void LedgerImpl::SaveRecurringTip(type::RecurringTipPtr info,
                                   ResultCallback callback) {
   WhenReady([this, info = std::move(info), callback]() mutable {
+    context().Get<ContributionStore>().SetRecurringContribution(
+        info->publisher_key, info->amount);
+    // TODO(zenparsing): Remove this.
     database()->SaveRecurringTip(std::move(info), callback);
   });
 }
 
 void LedgerImpl::GetRecurringTips(PublisherInfoListCallback callback) {
+  // TODO(zenparsing): Replace this with ContributionStore calls.
   WhenReady([this, callback]() { contribution()->GetRecurringTips(callback); });
 }
 
 void LedgerImpl::GetOneTimeTips(PublisherInfoListCallback callback) {
   WhenReady([this, callback]() {
+    // TODO(zenparsing): Replace this with ContributionStore calls.
     database()->GetOneTimeTips(util::GetCurrentMonth(), util::GetCurrentYear(),
                                callback);
   });
@@ -578,6 +607,7 @@ void LedgerImpl::RefreshPublisher(const std::string& publisher_key,
 }
 
 void LedgerImpl::StartMonthlyContribution() {
+  // TODO(zenparsing): Replace this with a call to ContributionScheduler.
   WhenReady([this]() { contribution()->StartMonthlyContribution(); });
 }
 
@@ -650,6 +680,7 @@ std::string LedgerImpl::GetShareURL(
 void LedgerImpl::GetPendingContributions(
     PendingContributionInfoListCallback callback) {
   WhenReady([this, callback]() {
+    // TODO(zenparsing): Use ContributionStore.
     database()->GetPendingContributions(
         [this, callback](type::PendingContributionInfoList list) {
           // The publisher status field may be expired. Attempt to refresh
@@ -662,12 +693,16 @@ void LedgerImpl::GetPendingContributions(
 void LedgerImpl::RemovePendingContribution(uint64_t id,
                                            ResultCallback callback) {
   WhenReady([this, id, callback]() {
+    context().Get<ContributionStore>().DeletePendingContribution(id);
+    // TODO(zenparsing): Remove this.
     database()->RemovePendingContribution(id, callback);
   });
 }
 
 void LedgerImpl::RemoveAllPendingContributions(ResultCallback callback) {
   WhenReady([this, callback]() {
+    context().Get<ContributionStore>().ClearPendingContributions();
+    // TODO(zenparsing): Remove this.
     database()->RemoveAllPendingContributions(callback);
   });
 }
@@ -675,6 +710,8 @@ void LedgerImpl::RemoveAllPendingContributions(ResultCallback callback) {
 void LedgerImpl::GetPendingContributionsTotal(
     PendingContributionsTotalCallback callback) {
   WhenReady([this, callback]() {
+    // TODO(zenparsing): Use ContributionStore::GetPendingContributions and
+    // total it up here.
     database()->GetPendingContributionsTotal(callback);
   });
 }
@@ -773,12 +810,15 @@ void LedgerImpl::GetTransactionReport(type::ActivityMonth month,
 void LedgerImpl::GetContributionReport(type::ActivityMonth month,
                                        int year,
                                        GetContributionReportCallback callback) {
+  // TODO(zenparsing): Use ContributionStore.
   WhenReady([this, month, year, callback]() {
     database()->GetContributionReport(month, year, callback);
   });
 }
 
 void LedgerImpl::GetAllContributions(ContributionInfoListCallback callback) {
+  // TODO(zenparsing): Use ContributionStore. This method is used by the
+  // rewards-internal page.
   WhenReady([this, callback]() { database()->GetAllContributions(callback); });
 }
 

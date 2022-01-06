@@ -12,6 +12,7 @@
 #include <memory>
 #include <string>
 
+#include "bat/ledger/internal/core/callback_adapter.h"
 #include "bat/ledger/internal/endpoint/promotion/promotion_server.h"
 #include "bat/ledger/ledger.h"
 
@@ -40,11 +41,6 @@ class WalletBalance {
   void GetUnblindedTokens(
       type::BalancePtr balance,
       ledger::FetchBalanceCallback callback);
-
-  void OnGetUnblindedTokens(
-      type::Balance info,
-      ledger::FetchBalanceCallback callback,
-      type::UnblindedTokenList list);
 
   void ExternalWallets(
       type::BalancePtr balance,
@@ -76,6 +72,7 @@ class WalletBalance {
 
   LedgerImpl* ledger_;  // NOT OWNED
   std::unique_ptr<endpoint::PromotionServer> promotion_server_;
+  CallbackAdapter callback_adapter_;
 };
 
 }  // namespace wallet

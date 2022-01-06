@@ -559,16 +559,6 @@ class PageWallet extends React.Component<Props, State> {
     return `(${text})`
   }
 
-  getContributionDescription = (contribution: Rewards.ContributionReport) => {
-    if (contribution.type === 1) { // Rewards.ReportType.AUTO_CONTRIBUTION
-      return getLocale(
-        'autoContributeTransaction',
-        { processor: this.getProcessorString(contribution.processor) })
-    }
-
-    return ''
-  }
-
   generateTransactionRows = (): TransactionRow[] => {
     const {
       monthlyReport,
@@ -593,25 +583,6 @@ class PageWallet extends React.Component<Props, State> {
           }
         }
       })
-    }
-
-    if (monthlyReport.contributions) {
-      transactions = transactions.concat(
-        monthlyReport.contributions
-          .filter((contribution: Rewards.ContributionReport) => contribution.type === 1)
-          .map((contribution: Rewards.ContributionReport) => {
-            return {
-              date: contribution.created_at,
-              type: this.getSummaryType(contribution.type),
-              description: this.getContributionDescription(contribution),
-              amount: {
-                value: contribution.amount.toFixed(3),
-                converted: utils.convertBalance(contribution.amount, parameters.rate),
-                isNegative: true
-              }
-            }
-          })
-      )
     }
 
     transactions.sort((a, b) => a.date - b.date)

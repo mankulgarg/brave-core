@@ -1649,6 +1649,7 @@ BATLedgerBridge(BOOL,
 }
 
 - (void)showAddFundsNotificationIfNeccessary {
+  // TODO(zenparsing): Can we remove this method altogether?
   const auto stamp = ledger->GetReconcileStamp();
   const auto now = [[NSDate date] timeIntervalSince1970];
 

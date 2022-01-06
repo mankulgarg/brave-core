@@ -559,7 +559,6 @@ void CustomizeWebUIHTMLSource(const std::string &name,
         { "all", IDS_BRAVE_UI_ADS_ALL },
         { "amount", IDS_BRAVE_UI_AMOUNT },
         { "autoContribute", IDS_BRAVE_UI_BRAVE_CONTRIBUTE_TITLE },
-        { "autoContributeTransaction", IDS_BRAVE_UI_BRAVE_CONTRIBUTE_TRANSACTION },              // NOLINT
         { "backup", IDS_BRAVE_UI_BACKUP },
         { "braveRewards", IDS_BRAVE_UI_BRAVE_REWARDS },
         { "cancel", IDS_BRAVE_UI_CANCEL },

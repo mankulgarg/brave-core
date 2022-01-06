@@ -14,6 +14,8 @@
 #include "base/strings/stringprintf.h"
 #include "bat/ledger/global_constants.h"
 #include "bat/ledger/internal/constants.h"
+#include "bat/ledger/internal/contributions/contribution_store.h"
+#include "bat/ledger/internal/contributions/pending_contribution_processor.h"
 #include "bat/ledger/internal/ledger_impl.h"
 #include "bat/ledger/internal/legacy/static_values.h"
 #include "bat/ledger/internal/publisher/prefix_util.h"
@@ -66,7 +68,10 @@ void Publisher::RefreshPublisher(
           case type::PublisherStatus::UPHOLD_VERIFIED:
           case type::PublisherStatus::BITFLYER_VERIFIED:
           case type::PublisherStatus::GEMINI_VERIFIED:
-            ledger_->contribution()->ContributeUnverifiedPublishers();
+            ledger_->context()
+                .Get<PendingContributionProcessor>()
+                .ProcessPendingContributions();
+            // ledger_->contribution()->ContributeUnverifiedPublishers();
             break;
           default:
             break;
@@ -80,7 +85,10 @@ void Publisher::SetPublisherServerListTimer() {
   prefix_list_updater_->StartAutoUpdate([this]() {
     // Attempt to reprocess any contributions for previously
     // unverified publishers that are now verified.
-    ledger_->contribution()->ContributeUnverifiedPublishers();
+    ledger_->context()
+        .Get<PendingContributionProcessor>()
+        .ProcessPendingContributions();
+    // ledger_->contribution()->ContributeUnverifiedPublishers();
   });
 }
 
@@ -365,6 +373,9 @@ void Publisher::SaveVisitInternal(
     auto callback = std::bind(&Publisher::OnPublisherInfoSaved,
         this,
         _1);
+
+    ledger_->context().Get<ContributionStore>().AddPublisherActivity(
+        publisher_key, first_visit ? 1 : 0, base::Seconds(duration));
 
     ledger_->database()->SaveActivityInfo(std::move(publisher_info), callback);
   }
