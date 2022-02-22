@@ -4,7 +4,7 @@
 // you can obtain one at http://mozilla.org/MPL/2.0/.
 
 import * as React from 'react'
-import { CaratRightIcon } from 'brave-ui/components/icons'
+import { CaratRightIcon, LoaderIcon, PlusIcon } from 'brave-ui/components/icons'
 import { getLocale } from '../../../../../common/locale'
 import { Publisher } from '../../../../api/brave_news'
 import {
@@ -117,7 +117,9 @@ export default function Sources (props: SourcesProps) {
     feedInputText,
     onRemoveDirectFeed,
     onChangeFeedInput,
-    onAddSource
+    feedSearchResults,
+    onAddSource,
+    onSearchForSources
   } = useManageDirectFeeds(props.publishers)
   // Set blank category on navigation back
   const onBack = React.useCallback(() => {
@@ -151,13 +153,32 @@ export default function Sources (props: SourcesProps) {
           {(feedInputIsValid === FeedInputValidity.NotValid) &&
             <Styled.FeedUrlError>Sorry, we couldn't find a feed at that address.</Styled.FeedUrlError>
           }
-          <Styled.YourSourcesAction>
+          {(feedInputIsValid === FeedInputValidity.IsDuplicate) &&
+            <Styled.FeedUrlError>Seems like you already subscribe to that feed.</Styled.FeedUrlError>
+          }
+          {(feedInputIsValid === FeedInputValidity.HasResults) &&
+            <Styled.FeedSearchResults>
+              Multiple feeds were found:
+              {feedSearchResults.map(result => (
+                <Styled.ResultItem>
+                  <span title={result.feedUrl.url}>{result.feedTitle}</span>
+                  <Button
+                    isDisabled={result.status !== FeedInputValidity.Valid}
+                    onClick={onAddSource.bind(undefined, result.feedUrl.url)}
+                  >
+                    {(result.status === FeedInputValidity.Pending) ? <LoaderIcon /> : <PlusIcon />}
+                  </Button>
+                </Styled.ResultItem>
+              ))}
+            </Styled.FeedSearchResults>
+          }
+ <Styled.YourSourcesAction>
             <Button
               isPrimary
               scale='small'
               isDisabled={feedInputIsValid !== FeedInputValidity.Valid}
               isLoading={feedInputIsValid === FeedInputValidity.Pending}
-              onClick={onAddSource}
+              onClick={onSearchForSources}
             >
               Add source
             </Button>
