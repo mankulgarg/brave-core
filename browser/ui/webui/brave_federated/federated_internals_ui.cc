@@ -27,6 +27,7 @@
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_ui.h"
 #include "content/public/browser/web_ui_data_source.h"
+#include "chrome/browser/ui/webui/webui_util.h"
 
 
 FederatedInternalsUI::FederatedInternalsUI(content::WebUI* web_ui)
@@ -39,11 +40,13 @@ FederatedInternalsUI::FederatedInternalsUI(content::WebUI* web_ui)
   html_source->AddString("userName", "Bob");
   html_source->UseStringsJs();
 
+  html_source->SetDefaultResource(IDR_FEDERATED_INTERNALS_HTML);
   html_source->AddResourcePath("federated_internals.css",
                                IDR_FEDERATED_INTERNALS_CSS);
-//   html_source->AddResourcePath("federated_internals.js",
-//                                IDR_FEDERATED_INTERNALS_JS);
-  html_source->SetDefaultResource(IDR_FEDERATED_INTERNALS_HTML);
+  html_source->AddResourcePath("federated_internals.js",
+                            IDR_FEDERATED_INTERNALS_JS);
+//   html_source->AddResourcePath("federated_internals_browser_proxy.js",
+//                             IDR_FEDERATED_INTERNALS_BROWSER_PROXY_JS);
 
   content::BrowserContext* browser_context =
       web_ui->GetWebContents()->GetBrowserContext();

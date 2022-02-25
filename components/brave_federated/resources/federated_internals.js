@@ -1,27 +1,58 @@
-import {addWebUIListener} from 'chrome://resources/js/cr.m.js';
-import {decorate} from 'chrome://resources/js/cr/ui.m.js';
-import {TabBox} from 'chrome://resources/js/cr/ui/tabs.js';
-import {loadTimeData} from 'chrome://resources/js/load_time_data.m.js';
-
 import {$} from 'chrome://resources/js/util.m.js';
+import {PageCallbackRouter, PageHandlerFactory, PageHandlerRemote} from './brave_federated.mojom-webui.js';
 
-import {AdStoreLog} from './segmentation_internals.mojom-webui.js';
-import {FederatedInternalsBrowserProxy} from './segmentation_internals_browser_proxy.js';
+export class FederatedInternalsBrowserProxy {
+  handler;
+  callbackRouter;
 
-function getProxy(): FederatedInternalsBrowserProxy {
-  return FederatedInternalsBrowserProxy.getInstance();
+  constructor() {
+    this.callbackRouter = new PageCallbackRouter();
+    this.handler = new PageHandlerRemote();
+    const factory = PageHandlerFactory.getRemote();
+    factory.createPageHandler(
+        this.callbackRouter.$.bindNewPipeAndPassRemote(),
+        this.handler.$.bindNewPipeAndPassReceiver());
+  }
+
+  getServiceStatus() {
+    return this.handler.getServiceStatus();
+  }
+
+  executeModel(target) {
+    return this.handler.executeModel(target);
+  }
+
+  overwriteResult(target, result) {
+    return this.handler.overwriteResult(target, result);
+  }
+
+  setSelected(segmentationKey, target) {
+    return this.handler.setSelected(segmentationKey, target);
+  }
+
+  static getInstance() {
+    return instance || (instance = new FederatedInternalsBrowserProxy());
+  }
+
+  getCallbackRouter() {
+    return this.callbackRouter;
+  }
 }
+
+let instance = null;
 
 const dataStoresLogs = {};
 let selectedDataStore = "ad-timing";
 
-function initialize() {
-  decorate('tabbox', TabBox);
+function getProxy() {
+  return FederatedInternalsBrowserProxy.getInstance();
+}
 
+function initialize() {
   getProxy().getAdStoreInfo();
   
-  getProxy().getCallbackRouter().onAdsTimingDataStoreLogsLoaded.addListener(
-    (ad_store_logs: Array<AdStoreLog>) => {
+  getProxy().getCallbackRouter().onAdStoreInfoAvailable.addListener(
+    (logs) => {
       dataStoresLogs['ad-timing'] = logs;
       onDataStoreChanged();
   });
@@ -29,44 +60,12 @@ function initialize() {
   const button = $('data-store-logs-dump');
   button.addEventListener('click', onLogsDump);
 
-  const tabpanelNodeList = document.getElementsByTagName('tabpanel');
-  const tabpanels = Array.prototype.slice.call(tabpanelNodeList, 0);
-  const tabpanelIds = tabpanels.map(function(tab) {
-    return tab.id;
-  });
-
-  const tabNodeList = document.getElementsByTagName('tab');
-  const tabs = Array.prototype.slice.call(tabNodeList, 0);
-  tabs.forEach(function(tab) {
-    tab.onclick = function(e) {
-      const tabbox = document.querySelector('tabbox');
-      const tabpanel = tabpanels[tabbox.selectedIndex];
-      const hash = tabpanel.id.match(/(?:^tabpanel-)(.+)/)[1];
-      window.location.hash = hash;
-    };
-  });
-
-  const activateTabByHash = function() {
-    let hash = window.location.hash;
-
-    // Remove the first character '#'.
-    hash = hash.substring(1);
-
-    const id = 'tabpanel-' + hash;
-    if (tabpanelIds.indexOf(id) === -1) {
-      return;
-    }
-
-    $(id).selected = true;
-  };
-
-  window.onhashchange = activateTabByHash;
   $('stores').onchange = onDataStoreChanged;
-  activateTabByHash();
 }
 
 function onDataStoreChanged() {
-    selectedDataStore = $('stores').value;
+    let store_selection = $('stores')
+    selectedDataStore = store_selection.options[store_selection.selectedIndex].value;
     const logs = dataStoresLogs[selectedDataStore]; 
 
     if (selectedDataStore == 'ad-timing') {
@@ -79,13 +78,13 @@ function onDataStoreChanged() {
             thead.appendChild(th);
         });
     
-      logs.forEach(function(log) {
+      logs?.forEach(function(log) {
         const tr = document.createElement('tr');
-        appendTD(tr, log.log_id, 'ad-timing-log-id');
-        appendTD(tr, formatDate(new Date(log.log_time)), 'ad-timing-log-time');
-        appendTD(tr, log.log_locale, 'ad-timing-log-locale');
-        appendTD(tr, log.log_number_of_tabs, 'ad-timing-log-number_of_tabs');
-        appendBooleanTD(tr, log.log_label, 'ad-timing-log-label');
+        appendTD(tr, log.logId, 'ad-timing-log-id');
+        appendTD(tr, formatDate(new Date(log.logTime)), 'ad-timing-log-time');
+        appendTD(tr, log.logLocale, 'ad-timing-log-locale');
+        appendTD(tr, log.logNumberOfTabs, 'ad-timing-log-number_of_tabs');
+        appendBooleanTD(tr, log.logLabel, 'ad-timing-log-label');
     
         const tabpanel = $('tabpanel-data-store-logs');
         const tbody = tabpanel.getElementsByTagName('tbody')[0];
@@ -98,14 +97,14 @@ function onDataStoreChanged() {
 
  function appendTD(parent, content, className) {
   const td = document.createElement('td');
-  td.textContent = content;
+  td.textContent = typeof(content) === "number" ? content.toString() : content;
   td.className = className;
   parent.appendChild(td);
 }
 
 function appendBooleanTD(parent, value, className) {
   const td = document.createElement('td');
-  td.textContent = value;
+  td.textContent = value ? "True" : "False";
   td.className = className;
   td.bgColor = value ? '#3cba54' : '#db3236';
   parent.appendChild(td);
@@ -154,7 +153,7 @@ function onLogsDump() {
   
     const event = document.createEvent('MouseEvent');
     event.initMouseEvent(
-        'click', true, true, window, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, null);
+        'click', true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
     a.dispatchEvent(event);
   }
 

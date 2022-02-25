@@ -33,9 +33,7 @@ void FederatedInternalsPageHandlerImpl::GetAdStoreInfo() {
     auto* const ad_notification_data_store =
       data_store_service_->GetAdNotificationTimingDataStore();
 
-    ad_notification_data_store
-      ->AsyncCall(&brave_federated::AdNotificationTimingDataStore::LoadLogs)
-      .Then(base::BindOnce(
+    ad_notification_data_store->LoadLogs(base::BindOnce(
           &FederatedInternalsPageHandlerImpl::OnAdStoreInfoAvailable,
           weak_ptr_factory_.GetWeakPtr()));
 }
