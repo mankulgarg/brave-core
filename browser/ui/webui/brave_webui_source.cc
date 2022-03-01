@@ -52,6 +52,12 @@ void AddResourcePaths(content::WebUIDataSource* html_source,
   }
 }
 
+bool IsP3AOptInEnabled() {
+  // check P3AOptIn feature flag.
+  // Always return true for testing...
+  return true;
+}
+
 void CustomizeWebUIHTMLSource(const std::string &name,
     content::WebUIDataSource* source) {
 #if !defined(OS_ANDROID)
@@ -59,6 +65,9 @@ void CustomizeWebUIHTMLSource(const std::string &name,
     NavigationBarDataProvider::Initialize(source);
   }
 #endif
+
+  // Feature flags
+  source->AddBoolean("featureFlagP3AOptIn", IsP3AOptInEnabled());
 
   // clang-format off
   static std::map<std::string, std::vector<WebUISimpleItem> > resources = {
