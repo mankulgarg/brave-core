@@ -6,6 +6,7 @@ import * as React from 'react'
 
 // Feature-specific components
 import { Content, Title, Paragraph } from '../../components'
+import { Checkbox } from 'brave-ui/components'
 
 // Utils
 import { getLocale } from '../../../common/locale'
@@ -18,7 +19,7 @@ interface Props {
   currentScreen: number
 }
 
-// Hack inline style until a Checkbox or Toggle component is available.
+// Hack inline style for the Checkbox or Toggle label text.
 const hackStyleDiv = {
   color: '#FFFFFF',
   fontFamily: 'Muli,sans-serif',
@@ -26,11 +27,6 @@ const hackStyleDiv = {
   textAlign: 'center' as 'center',
   //display: 'block',
   WebkitFontSmoothing: 'antialiased',
-}
-
-// Override margins on screen-select bullet buttons.
-const hackStyleInput = {
-  margin: 12,
 }
 
 export default class ShieldsBox extends React.PureComponent<Props> {
@@ -56,15 +52,16 @@ export default class ShieldsBox extends React.PureComponent<Props> {
           { getLocale('shieldsDesc') }
         </Paragraph>
         {opt_in && (
-          <div style={hackStyleDiv}>
-            <label>
-              <input
-                type='checkbox'
-                style={hackStyleInput}
-              />
+          <Checkbox
+            value={{ 'p3a': !opt_in }}
+            >
+            <div
+              data-key='p3a'
+              style={hackStyleDiv}
+            >
               { getLocale('p3aCheckbox') }
-            </label>
-          </div>
+            </div>
+          </Checkbox>
         )}
         <Paragraph>
           {text[0]},
