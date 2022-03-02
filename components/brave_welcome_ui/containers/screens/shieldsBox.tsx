@@ -10,6 +10,7 @@ import { Checkbox } from 'brave-ui/components'
 
 // Utils
 import { getLocale } from '../../../common/locale'
+import { loadTimeData } from '../../../common/loadTimeData'
 
 // Images
 import { WelcomeShieldsImage } from '../../components/images'
@@ -25,19 +26,20 @@ const hackStyleDiv = {
   fontFamily: 'Muli,sans-serif',
   fontSize: 22,
   textAlign: 'center' as 'center',
-  //display: 'block',
   WebkitFontSmoothing: 'antialiased',
 }
 
 export default class ShieldsBox extends React.PureComponent<Props> {
   render () {
     const text = getLocale('p3aDesc').split('$1')
-    // TODO: Obtain this from a feature flag on the c++ side.
-    const opt_in = true
+    const opt_in = loadTimeData.getBoolean('featureFlagP3AOptIn')
 
     // TODO: Record opt-in choice in component state and return it for reporting.
 
     const { index, currentScreen } = this.props
+    const onChange = (key: string, selected: boolean) => {
+      console.log(key, selected)
+    }
 
     return (
       <Content
@@ -54,32 +56,32 @@ export default class ShieldsBox extends React.PureComponent<Props> {
         {opt_in && (
           <Checkbox
             value={{ 'p3a': !opt_in }}
+            onChange={onChange}
             >
             <div
               data-key='p3a'
-              style={hackStyleDiv}
-            >
+            ><span style={hackStyleDiv}>
               { getLocale('p3aCheckbox') }
-            </div>
+            </span></div>
           </Checkbox>
         )}
         <Paragraph>
-          {text[0]},
+          {text[0]}
           <a
             href='https://brave.com/p3a'
             target='_blank'
             rel='noopener noreferrer'
           >
             {text[1]}
-          </a>,
-          {text[2]},
+          </a>
+          {text[2]}
           <a
             href='brave://settings/privacy'
             target='_blank'
             rel='noopener noreferrer'
           >
-            {text[3]},
-          </a>,
+            {text[3]}
+          </a>
           {text[4]}
         </Paragraph>
       </Content>

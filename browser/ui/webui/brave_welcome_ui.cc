@@ -128,6 +128,13 @@ std::string CountryIDToCountryString(int country_id) {
   return country_string;
 }
 
+// Returns whether the P3A opt-in prompt should be shown.
+bool IsP3AOptInEnabled() {
+  // Always return true for testing.
+  return true;
+}
+
+
 }  // namespace
 
 BraveWelcomeUI::BraveWelcomeUI(content::WebUI* web_ui, const std::string& name)
@@ -156,6 +163,7 @@ BraveWelcomeUI::BraveWelcomeUI(content::WebUI* web_ui, const std::string& name)
     }
   }
   source->AddString("countryString", CountryIDToCountryString(country_id));
+  source->AddBoolean("featureFlagP3AOptIn", IsP3AOptInEnabled());
 
   profile->GetPrefs()->SetBoolean(prefs::kHasSeenWelcomePage, true);
 }

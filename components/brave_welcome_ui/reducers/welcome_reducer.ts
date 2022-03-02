@@ -60,7 +60,8 @@ const welcomeReducer: Reducer<Welcome.State | undefined> = (state: Welcome.State
       chrome.send('recordP3A', [
         details.currentScreen,
         details.finished,
-        details.skipped
+        details.skipped,
+        details.optin
       ])
       break
   }
