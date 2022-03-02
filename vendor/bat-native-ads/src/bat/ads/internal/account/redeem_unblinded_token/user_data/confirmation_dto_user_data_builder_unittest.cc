@@ -7,17 +7,23 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
+#include "bat/ads/internal/ads_client_helper.h"
+#include "bat/ads/internal/catalog/catalog_util.h"
 #include "bat/ads/internal/database/tables/conversion_queue_database_table.h"
 #include "bat/ads/internal/unittest_base.h"
 #include "bat/ads/internal/unittest_time_util.h"
 #include "bat/ads/internal/unittest_util.h"
+#include "bat/ads/pref_names.h"
 
 // npm run test -- brave_unit_tests --filter=BatAds*
 
 namespace ads {
 
 namespace {
+
+constexpr char kCatalogId[] = "04a13086-8fd8-4dce-a44f-afe86f14a662";
 
 bool IsValidEnvelope(const base::Value& envelope) {
   if (!envelope.is_dict()) {
@@ -121,6 +127,8 @@ TEST_F(BatAdsConfirmationDtoUserDataTest, BuildWithoutConversion) {
   SetBuildChannel(true, "release");
   MockLocaleHelper(locale_helper_mock_, "en-GB");
 
+  AdsClientHelper::Get()->SetStringPref(prefs::kCatalogId, kCatalogId);
+
   // Act
   const std::string creative_instance_id =
       "465f10df-fbc4-4a92-8d43-4edf73734a60";
@@ -135,10 +143,24 @@ TEST_F(BatAdsConfirmationDtoUserDataTest, BuildWithoutConversion) {
 
         base::DictionaryValue expected_user_data;
         expected_user_data.SetKey("buildChannel", base::Value("release"));
+
+        base::Value catalog_list(base::Value::Type::LIST);
+        base::Value catalog_dictionary(base::Value::Type::DICTIONARY);
+        const std::string catalog_id = GetCatalogId();
+        catalog_dictionary.SetKey("id", base::Value(kCatalogId));
+        catalog_list.Append(std::move(catalog_dictionary));
+        base::DictionaryValue expected_catalog;
+        expected_user_data.SetKey("catalog", std::move(catalog_list));
+
         expected_user_data.SetKey("countryCode", base::Value("GB"));
+
         expected_user_data.SetKey("platform", base::Value("macos"));
+
         expected_user_data.SetKey("studies",
                                   base::Value(base::Value::Type::LIST));
+
+        expected_user_data.SetKey("timestamp",
+                                  base::Value(base::Value(NowAsISO8601())));
 
         EXPECT_EQ(expected_user_data, *user_data_dictionary);
       });

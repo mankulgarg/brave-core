@@ -14,10 +14,12 @@
 #include "base/values.h"
 #include "bat/ads/confirmation_type.h"
 #include "bat/ads/internal/account/redeem_unblinded_token/user_data/confirmation_build_channel_dto_user_data.h"
+#include "bat/ads/internal/account/redeem_unblinded_token/user_data/confirmation_catalog_dto_user_data.h"
 #include "bat/ads/internal/account/redeem_unblinded_token/user_data/confirmation_conversion_dto_user_data.h"
 #include "bat/ads/internal/account/redeem_unblinded_token/user_data/confirmation_locale_dto_user_data.h"
 #include "bat/ads/internal/account/redeem_unblinded_token/user_data/confirmation_platform_dto_user_data.h"
 #include "bat/ads/internal/account/redeem_unblinded_token/user_data/confirmation_studies_dto_user_data.h"
+#include "bat/ads/internal/account/redeem_unblinded_token/user_data/confirmation_timestamp_dto_user_data.h"
 #include "bat/ads/internal/database/tables/conversion_queue_database_table.h"
 #include "bat/ads/internal/logging.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
@@ -33,6 +35,12 @@ void Build(const std::string& creative_instance_id,
   DCHECK_NE(ConfirmationType::kUndefined, confirmation_type.value());
 
   base::DictionaryValue user_data;
+
+  const base::DictionaryValue& timestamp_user_data = GetTimestamp();
+  user_data.MergeDictionary(&timestamp_user_data);
+
+  const base::DictionaryValue& catalog_user_data = GetCatalog();
+  user_data.MergeDictionary(&catalog_user_data);
 
   const base::DictionaryValue& platform_user_data = GetPlatform();
   user_data.MergeDictionary(&platform_user_data);
