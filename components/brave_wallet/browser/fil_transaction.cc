@@ -67,7 +67,6 @@ bool FilTransaction::operator!=(const FilTransaction& other) const {
 // static
 absl::optional<FilTransaction> FilTransaction::FromTxData(
     const mojom::FilTxDataPtr& tx_data) {
-
   FilTransaction tx;
   uint64_t nonce = 0;
   if (!tx_data->nonce.empty() && base::StringToUint64(tx_data->nonce, &nonce)) {
@@ -126,7 +125,6 @@ base::Value FilTransaction::ToValue() const {
 // static
 absl::optional<FilTransaction> FilTransaction::FromValue(
     const base::Value& value) {
-
   FilTransaction tx;
   const std::string* nonce_value = value.FindStringKey("nonce");
   if (!nonce_value)
