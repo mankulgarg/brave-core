@@ -26,8 +26,8 @@ class MSEdgeProtocolMessageHandler : public content::WebUIMessageHandler {
   void RegisterMessages() override;
 
   void HandleCheckDefaultMSEdgeProtocolHandlerState(
-      base::Value::ConstListView args);
-  void HandleSetAsDefaultMSEdgeProtocolHandler(base::Value::ConstListView args);
+      const base::Value::List& args);
+  void HandleSetAsDefaultMSEdgeProtocolHandler(const base::Value::List& args);
 
   void OnIsDefaultProtocolHandler(bool is_default);
   void OnSetDefaultProtocolHandler(bool success);
