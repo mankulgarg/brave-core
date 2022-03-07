@@ -1376,6 +1376,20 @@ bool KeyringService::RecoverAddressByDefaultKeyring(
   return EthereumKeyring::RecoverAddress(message, signature, address);
 }
 
+bool KeyringService::GetPublicKeyByDefaultKeyring(const std::string& address,
+                                                  std::string* key) {
+  CHECK(key);
+  LOG(ERROR) << "KeyringService::GetPublicKeyByDefaultKeyring-1";
+  auto* keyring = GetHDKeyringById(mojom::kDefaultKeyringId);
+  if (!keyring) {
+    LOG(ERROR) << "KeyringService::GetPublicKeyByDefaultKeyring-2";
+    return false;
+  }
+  LOG(ERROR) << "KeyringService::GetPublicKeyByDefaultKeyring-3";
+  return static_cast<EthereumKeyring*>(keyring)->GetPublicKey(
+      EthAddress::FromHex(address).ToChecksumAddress(), key);
+}
+
 std::vector<uint8_t> KeyringService::SignMessage(
     const std::string& keyring_id,
     const std::string& address,

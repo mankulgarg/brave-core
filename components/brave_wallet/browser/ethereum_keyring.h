@@ -37,6 +37,8 @@ class EthereumKeyring : public HDKeyring {
                        EthTransaction* tx,
                        uint256_t chain_id);
 
+  bool GetPublicKey(const std::string& address, std::string* key);
+
  private:
   std::string GetAddressInternal(HDKeyBase* hd_key) const override;
 };
