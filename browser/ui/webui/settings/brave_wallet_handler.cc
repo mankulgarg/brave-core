@@ -86,7 +86,7 @@ void BraveWalletHandler::RegisterMessages() {
                           base::Unretained(this)));
 }
 
-void BraveWalletHandler::GetAutoLockMinutes(base::Value::ConstListView args) {
+void BraveWalletHandler::GetAutoLockMinutes(const base::Value::List& args) {
   CHECK_EQ(args.size(), 1U);
   PrefService* prefs = Profile::FromWebUI(web_ui())->GetPrefs();
   AllowJavascript();
@@ -94,7 +94,7 @@ void BraveWalletHandler::GetAutoLockMinutes(base::Value::ConstListView args) {
       args[0], base::Value(prefs->GetInteger(kBraveWalletAutoLockMinutes)));
 }
 
-void BraveWalletHandler::RemoveEthereumChain(base::Value::ConstListView args) {
+void BraveWalletHandler::RemoveEthereumChain(const base::Value::List& args) {
   CHECK_EQ(args.size(), 2U);
   PrefService* prefs = Profile::FromWebUI(web_ui())->GetPrefs();
   AllowJavascript();
@@ -102,8 +102,7 @@ void BraveWalletHandler::RemoveEthereumChain(base::Value::ConstListView args) {
   ResolveJavascriptCallback(args[0], base::Value(true));
 }
 
-void BraveWalletHandler::GetCustomNetworksList(
-    base::Value::ConstListView args) {
+void BraveWalletHandler::GetCustomNetworksList(const base::Value::List& args) {
   CHECK_EQ(args.size(), 1U);
   PrefService* prefs = Profile::FromWebUI(web_ui())->GetPrefs();
   base::Value list(base::Value::Type::LIST);
@@ -132,7 +131,7 @@ void BraveWalletHandler::OnAddEthereumChain(
     std::move(chain_callback_for_testing_).Run();
 }
 
-void BraveWalletHandler::AddEthereumChain(base::Value::ConstListView args) {
+void BraveWalletHandler::AddEthereumChain(const base::Value::List& args) {
   CHECK_EQ(args.size(), 2U);
   AllowJavascript();
   std::string error_message;
@@ -159,7 +158,7 @@ void BraveWalletHandler::AddEthereumChain(base::Value::ConstListView args) {
   ResolveJavascriptCallback(args[0], std::move(result));
 }
 
-void BraveWalletHandler::SetActiveNetwork(base::Value::ConstListView args) {
+void BraveWalletHandler::SetActiveNetwork(const base::Value::List& args) {
   CHECK_EQ(args.size(), 2U);
   AllowJavascript();
   auto* json_rpc_service =

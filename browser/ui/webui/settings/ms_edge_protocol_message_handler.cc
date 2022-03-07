@@ -87,13 +87,13 @@ void MSEdgeProtocolMessageHandler::RegisterMessages() {
 }
 
 void MSEdgeProtocolMessageHandler::HandleCheckDefaultMSEdgeProtocolHandlerState(
-    base::Value::ConstListView args) {
+    const base::Value::List& args) {
   AllowJavascript();
   CheckMSEdgeProtocolDefaultHandlerState();
 }
 
 void MSEdgeProtocolMessageHandler::HandleSetAsDefaultMSEdgeProtocolHandler(
-    base::Value::ConstListView args) {
+    const base::Value::List& args) {
   AllowJavascript();
 
   // Test purpose switch to use system ui.

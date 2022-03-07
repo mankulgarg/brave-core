@@ -33,11 +33,11 @@ class BraveWalletHandler : public settings::SettingsPageUIHandler {
   void OnJavascriptAllowed() override {}
   void OnJavascriptDisallowed() override {}
 
-  void GetAutoLockMinutes(base::Value::ConstListView args);
-  void RemoveEthereumChain(base::Value::ConstListView args);
-  void GetCustomNetworksList(base::Value::ConstListView args);
-  void AddEthereumChain(base::Value::ConstListView args);
-  void SetActiveNetwork(base::Value::ConstListView args);
+  void GetAutoLockMinutes(const base::Value::List& args);
+  void RemoveEthereumChain(const base::Value::List& args);
+  void GetCustomNetworksList(const base::Value::List& args);
+  void AddEthereumChain(const base::Value::List& args);
+  void SetActiveNetwork(const base::Value::List& args);
 
   BraveWalletHandler(const BraveWalletHandler&) = delete;
   BraveWalletHandler& operator=(const BraveWalletHandler&) = delete;
