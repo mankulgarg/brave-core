@@ -100,7 +100,7 @@ reducer.on(PanelActions.switchEthereumChain, (state: any, request: BraveWallet.S
   }
 })
 
-reducer.on(PanelActions.setPanelSwapQuote, (state: any, payload: BraveWallet.SwapResponse) => {
+reducer.on(PanelActions.setPanelSwapQuote, (state: any, payload: BraveWallet.SwapResponse | undefined) => {
   return {
     ...state,
     swapQuote: payload
