@@ -8,7 +8,6 @@ import * as Actions from '../actions/wallet_page_actions'
 import {
   BraveWallet,
   PageState,
-  SwapErrorResponse,
   ImportWalletError
 } from '../../constants/types'
 import {
@@ -35,9 +34,7 @@ const defaultState: PageState = {
   showIsRestoring: false,
   setupStillInProgress: false,
   isCryptoWalletsInitialized: false,
-  isMetaMaskInitialized: false,
-  swapQuote: undefined,
-  swapError: undefined
+  isMetaMaskInitialized: false
 }
 
 const reducer = createReducer<PageState>({}, defaultState)
@@ -167,20 +164,6 @@ reducer.on(Actions.setMetaMaskInitialized, (state: PageState, payload: boolean) 
   return {
     ...state,
     isMetaMaskInitialized: payload
-  }
-})
-
-reducer.on(Actions.setPageSwapQuote, (state: any, payload: BraveWallet.SwapResponse | undefined) => {
-  return {
-    ...state,
-    swapQuote: payload
-  }
-})
-
-reducer.on(Actions.setPageSwapError, (state: any, payload?: SwapErrorResponse) => {
-  return {
-    ...state,
-    swapError: payload
   }
 })
 

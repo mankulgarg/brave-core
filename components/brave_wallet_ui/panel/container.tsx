@@ -68,8 +68,7 @@ import {
   findUnstoppableDomainAddress,
   getBuyAssets,
   getChecksumEthAddress,
-  getERC20Allowance,
-  getIsSwapSupported
+  getERC20Allowance
 } from '../common/async/lib'
 import { isHardwareAccount } from '../utils/address-utils'
 import { useAssets, useBalance, useSwap, useSend, usePreset } from '../common/hooks'
@@ -122,8 +121,6 @@ function Container (props: Props) {
     panelTitle,
     selectedPanel,
     networkPayload,
-    swapQuote,
-    swapError,
     signMessageData,
     switchChainRequest,
     suggestedToken,
@@ -141,7 +138,6 @@ function Container (props: Props) {
   const [buyAmount, setBuyAmount] = React.useState('')
 
   const {
-    swapAssetOptions,
     sendAssetOptions,
     buyAssetOptions,
     panelUserAssetList
@@ -185,17 +181,7 @@ function Container (props: Props) {
     onFilterAssetList,
     onSelectTransactAsset,
     onCustomSlippageToleranceChange
-  } = useSwap(
-    selectedAccount,
-    selectedNetwork,
-    swapAssetOptions,
-    props.walletPanelActions.fetchPanelSwapQuote,
-    getERC20Allowance,
-    props.walletActions.approveERC20Allowance,
-    getIsSwapSupported,
-    swapQuote,
-    swapError
-  )
+  } = useSwap()
 
   const {
     onSetSendAmount,

@@ -6,8 +6,7 @@
 import { createReducer } from 'redux-act'
 import {
   BraveWallet,
-  PanelState,
-  SwapErrorResponse
+  PanelState
 } from '../../constants/types'
 import * as PanelActions from '../actions/wallet_panel_actions'
 import {
@@ -40,8 +39,6 @@ const defaultState: PanelState = {
        }
     }
   },
-  swapQuote: undefined,
-  swapError: undefined,
   signMessageData: [{
     id: -1,
     address: '',
@@ -97,20 +94,6 @@ reducer.on(PanelActions.switchEthereumChain, (state: any, request: BraveWallet.S
   return {
     ...state,
     switchChainRequest: request
-  }
-})
-
-reducer.on(PanelActions.setPanelSwapQuote, (state: any, payload: BraveWallet.SwapResponse | undefined) => {
-  return {
-    ...state,
-    swapQuote: payload
-  }
-})
-
-reducer.on(PanelActions.setPanelSwapError, (state: any, payload?: SwapErrorResponse) => {
-  return {
-    ...state,
-    swapError: payload
   }
 })
 

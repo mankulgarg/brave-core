@@ -46,9 +46,7 @@ import {
   getBlockchainTokenInfo,
   getBuyAssets,
   getChecksumEthAddress,
-  getERC20Allowance,
   isStrongPassword,
-  getIsSwapSupported,
   onConnectHardwareWallet
 } from '../common/async/lib'
 
@@ -117,9 +115,7 @@ function Container (props: Props) {
     importWalletError,
     showAddModal,
     isCryptoWalletsInitialized,
-    isMetaMaskInitialized,
-    swapQuote,
-    swapError
+    isMetaMaskInitialized
   } = props.page
 
   // const [view, setView] = React.useState<NavTypes>('crypto')
@@ -173,17 +169,7 @@ function Container (props: Props) {
     onSelectSlippageTolerance,
     onSelectTransactAsset,
     onCustomSlippageToleranceChange
-  } = useSwap(
-    selectedAccount,
-    selectedNetwork,
-    swapAssetOptions,
-    props.walletPageActions.fetchPageSwapQuote,
-    getERC20Allowance,
-    props.walletActions.approveERC20Allowance,
-    getIsSwapSupported,
-    swapQuote,
-    swapError
-  )
+  } = useSwap()
 
   const {
     onSetSendAmount,
