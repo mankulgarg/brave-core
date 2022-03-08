@@ -17,16 +17,13 @@ describe('usePreset hook', () => {
 
     const { result: { current: calcPresetAmount } } = renderHook(() => usePreset(
       {
-        ...mockAccount,
-        tokenBalanceRegistry: {
-          [mockERC20Token.contractAddress.toLowerCase()]: balance
-        }
-      },
-      mockNetwork,
-      mockFunc,
-      jest.fn(),
-      mockERC20Token,
-      mockERC20Token
+        selectedAccount: { ...mockAccount, tokenBalanceRegistry: { [mockERC20Token.contractAddress.toLowerCase()]: balance } },
+        selectedNetwork: mockNetwork,
+        onSetSwapFromAmount: mockFunc,
+        onSetSendAmount: jest.fn(),
+        swapAsset: mockERC20Token,
+        sendAsset: mockERC20Token
+      }
     ))
 
     calcPresetAmount('swap')(percent)
@@ -39,12 +36,14 @@ describe('usePreset hook', () => {
     const mockOnSetSendAmount = jest.fn()
 
     const { result: { current: calcPresetAmount } } = renderHook(() => usePreset(
-      mockAccount,
-      mockNetwork,
-      mockOnSetFromAmount,
-      mockOnSetSendAmount,
-      undefined,
-      undefined
+      {
+        selectedAccount: mockAccount,
+        selectedNetwork: mockNetwork,
+        onSetSwapFromAmount: mockOnSetFromAmount,
+        onSetSendAmount: mockOnSetSendAmount,
+        swapAsset: undefined,
+        sendAsset: undefined
+      }
     ))
 
     calcPresetAmount('swap')(0.25)

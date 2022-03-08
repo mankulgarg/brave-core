@@ -13,10 +13,8 @@ import {
 } from '..'
 
 export interface Props {
-  accounts: UserAccountType[]
   selectedAsset: BraveWallet.BlockchainToken | undefined
   selectedNetwork: BraveWallet.NetworkInfo
-  selectedAccount: UserAccountType
   selectedAssetAmount: string
   selectedAssetBalance: string
   assetOptions: BraveWallet.BlockchainToken[]
@@ -33,18 +31,14 @@ export interface Props {
   onSetSendAmount: (value: string) => void
   onSetToAddressOrUrl: (value: string) => void
   onSelectPresetAmount: (percent: number) => void
-  networkList: BraveWallet.NetworkInfo[]
   onAddNetwork: () => void
   onAddAsset: () => void
 }
 
 function SendTab (props: Props) {
   const {
-    accounts,
-    networkList,
     selectedAsset,
     selectedNetwork,
-    selectedAccount,
     selectedAssetAmount,
     selectedAssetBalance,
     toAddressOrUrl,
@@ -107,8 +101,6 @@ function SendTab (props: Props) {
         <>
           {showHeader &&
             <Header
-              selectedAccount={selectedAccount}
-              selectedNetwork={selectedNetwork}
               onChangeSwapView={onChangeSendView}
             />
           }
@@ -131,10 +123,6 @@ function SendTab (props: Props) {
       }
       {sendView !== 'send' &&
         <AccountsAssetsNetworks
-          selectedAccount={selectedAccount}
-          selectedNetwork={selectedNetwork}
-          accounts={accounts}
-          networkList={networkList}
           goBack={goBack}
           assetOptions={assetOptions}
           onClickSelectAccount={onClickSelectAccount}

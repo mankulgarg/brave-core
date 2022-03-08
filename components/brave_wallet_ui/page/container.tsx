@@ -145,30 +145,14 @@ function Container (props: Props) {
   } = useTokenInfo(getBlockchainTokenInfo, userVisibleTokensInfo, fullTokenList, selectedNetwork)
 
   const {
-    exchangeRate,
-    fromAmount,
     fromAsset,
     isFetchingSwapQuote,
     isSwapButtonDisabled,
-    orderExpiration,
-    orderType,
-    slippageTolerance,
     swapValidationError,
-    toAmount,
-    toAsset,
-    customSlippageTolerance,
     isSwapSupported,
-    onToggleOrderType,
     onSwapQuoteRefresh,
-    onSetToAmount,
     onSetFromAmount,
-    flipSwapAssets,
-    onSubmitSwap,
-    onSetExchangeRate,
-    onSelectExpiration,
-    onSelectSlippageTolerance,
-    onSelectTransactAsset,
-    onCustomSlippageToleranceChange
+    onSelectTransactAsset
   } = useSwap()
 
   const {
@@ -211,16 +195,12 @@ function Container (props: Props) {
   const { computeFiatAmount } = usePricing(transactionSpotPrices)
   const getAccountBalance = useBalance(selectedNetwork)
   const sendAssetBalance = getAccountBalance(selectedAccount, selectedSendAsset)
-  const fromAssetBalance = getAccountBalance(selectedAccount, fromAsset)
-  const toAssetBalance = getAccountBalance(selectedAccount, toAsset)
 
-  const onSelectPresetAmountFactory = usePreset(
-    selectedAccount,
-    selectedNetwork,
-    onSetFromAmount,
-    onSetSendAmount,
-    fromAsset,
-    selectedSendAsset
+  const onSelectPresetAmount = usePreset(
+    {
+      onSetAmount: onSetFromAmount,
+      asset: fromAsset
+    }
   )
 
   const onToggleShowRestore = React.useCallback(() => {
@@ -682,25 +662,13 @@ function Container (props: Props) {
       {hideMainComponents &&
         <WalletWidgetStandIn>
           <BuySendSwap
-            accounts={accounts}
             networkList={networkList}
-            orderType={orderType}
-            swapToAsset={toAsset}
-            swapFromAsset={fromAsset}
             selectedNetwork={selectedNetwork}
-            selectedAccount={selectedAccount}
             selectedTab={selectedWidgetTab}
-            exchangeRate={exchangeRate}
             buyAmount={buyAmount}
             sendAmount={sendAmount}
-            fromAmount={fromAmount}
-            fromAssetBalance={fromAssetBalance}
-            toAmount={toAmount}
             addressError={addressError}
             addressWarning={addressWarning}
-            toAssetBalance={toAssetBalance}
-            orderExpiration={orderExpiration}
-            slippageTolerance={slippageTolerance}
             swapValidationError={swapValidationError}
             sendAmountValidationError={sendAmountValidationError}
             toAddressOrUrl={toAddressOrUrl}
@@ -713,26 +681,15 @@ function Container (props: Props) {
             isFetchingSwapQuote={isFetchingSwapQuote}
             isSwapSubmitDisabled={isSwapButtonDisabled}
             isSwapSupported={isSwapSupported}
-            customSlippageTolerance={customSlippageTolerance}
             defaultCurrencies={defaultCurrencies}
-            onCustomSlippageToleranceChange={onCustomSlippageToleranceChange}
             onSetBuyAmount={onSetBuyAmount}
             onSetToAddressOrUrl={onSetToAddressOrUrl}
-            onSelectExpiration={onSelectExpiration}
-            onSelectPresetFromAmount={onSelectPresetAmountFactory('swap')}
-            onSelectPresetSendAmount={onSelectPresetAmountFactory('send')}
-            onSelectSlippageTolerance={onSelectSlippageTolerance}
-            onSetExchangeRate={onSetExchangeRate}
+            onSelectPresetSendAmount={onSelectPresetAmount}
             onSetSendAmount={onSetSendAmount}
-            onSetFromAmount={onSetFromAmount}
-            onSetToAmount={onSetToAmount}
-            onSubmitSwap={onSubmitSwap}
             onSubmitSend={onSubmitSend}
             onSubmitBuy={onSubmitBuy}
-            flipSwapAssets={flipSwapAssets}
             onSelectNetwork={onSelectNetwork}
             onSelectAccount={onSelectAccount}
-            onToggleOrderType={onToggleOrderType}
             onSelectAsset={onSelectTransactAsset}
             onSelectTab={setSelectedWidgetTab}
             onSwapQuoteRefresh={onSwapQuoteRefresh}

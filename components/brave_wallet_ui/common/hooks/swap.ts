@@ -7,6 +7,7 @@ import * as React from 'react'
 
 // Constants
 import {
+  AmountPresetTypes,
   BraveWallet,
   ExpirationPresetObjectType,
   OrderTypes,
@@ -37,15 +38,24 @@ import BigNumber from 'bignumber.js'
 import { hexStrToNumberArray } from '../../utils/hex-utils'
 import { getBuyAssets, getERC20Allowance, getIsSwapSupported } from '../async/lib'
 import useAssets from './assets'
+import usePreset from './select-preset'
 
 const SWAP_VALIDATION_ERROR_CODE = 100
 
 export default function useSwap () {
   // redux
-  const { selectedAccount, selectedNetwork, accounts, fullTokenList, userVisibleTokensInfo, transactionSpotPrices } = useSelector(({ wallet }: { wallet: WalletState }) => wallet)
+  const {
+    accounts,
+    fullTokenList,
+    selectedAccount,
+    selectedNetwork,
+    transactionSpotPrices,
+    userVisibleTokensInfo
+  } = useSelector(({ wallet }: { wallet: WalletState }) => wallet)
   const dispatch = useDispatch()
 
   // assets
+  const getBalance = useBalance(selectedNetwork)
   const {
     swapAssetOptions
   } = useAssets(
@@ -60,7 +70,7 @@ export default function useSwap () {
 
   const [swapError, setSwapError] = React.useState<SwapErrorResponse | undefined>(undefined)
   const [swapQuote, setSwapQuote] = React.useState<BraveWallet.SwapResponse | undefined>(undefined)
-
+  const [selectedPreset, setSelectedPreset] = React.useState<AmountPresetTypes | undefined>()
   const [exchangeRate, setExchangeRate] = React.useState('')
   const [fromAmount, setFromAmount] = React.useState('')
   const [fromAsset, setFromAsset] = React.useState<BraveWallet.BlockchainToken | undefined>(swapAssetOptions[0])
@@ -114,9 +124,9 @@ export default function useSwap () {
       .catch(e => console.log(e))
   }, [fromAsset, swapQuote, selectedAccount])
 
-  const getBalance = useBalance(selectedNetwork)
-  const fromAssetBalance = getBalance(selectedAccount, fromAsset)
-  const nativeAssetBalance = getBalance(selectedAccount, nativeAsset)
+  const fromAssetBalance = React.useMemo(() => getBalance(selectedAccount, fromAsset), [selectedAccount, fromAsset])
+  const nativeAssetBalance = React.useMemo(() => getBalance(selectedAccount, nativeAsset), [selectedAccount, nativeAsset])
+  const toAssetBalance = React.useMemo(() => getBalance(selectedAccount, toAsset), [selectedAccount, toAsset])
 
   const feesWrapped = React.useMemo(() => {
     if (!swapQuote) {
@@ -275,7 +285,7 @@ export default function useSwap () {
     setExchangeRate(bestEstimatePrice)
   }, [swapQuote])
 
-  const fetchSwapQuote = async (payload: SwapParamsPayloadType) => {
+  const fetchSwapQuote = React.useCallback(async (payload: SwapParamsPayloadType) => {
     const { swapService, ethTxManagerProxy } = getAPIProxy()
 
     const {
@@ -357,7 +367,7 @@ export default function useSwap () {
         console.error(`[swap] error querying 0x API: ${quote.errorResponse}`)
       }
     }
-  }
+  }, [])
 
   /**
    * onSwapParamsChange() is triggered whenever a change in the swap fields
@@ -517,15 +527,17 @@ export default function useSwap () {
     [onSwapParamsChange]
   )
 
-  const flipSwapAssets = () => {
+  const flipSwapAssets = React.useCallback(() => {
     setFromAsset(toAsset)
     setToAsset(fromAsset)
 
+    clearPreset()
+
     onSwapParamsChange(
       { toOrFrom: 'from', fromAsset: toAsset, toAsset: fromAsset },
-      { fromAmount, toAmount }
+      { fromAmount: toAmount, toAmount: fromAmount }
     )
-  }
+  }, [toAsset, fromAsset, fromAmount, toAmount, onSwapParamsChange])
 
   const onSetFromAmount = (value: string) => {
     setFromAmount(value)
@@ -679,6 +691,17 @@ export default function useSwap () {
     setFilteredAssetList(newList)
   }
 
+  const clearPreset = () => {
+    setSelectedPreset(undefined)
+  }
+
+  const onSelectPresetAmount = usePreset(
+    {
+      onSetAmount: onSetFromAmount,
+      asset: fromAsset
+    }
+  )
+
   return {
     exchangeRate,
     filteredAssetList,
@@ -695,6 +718,9 @@ export default function useSwap () {
     toAsset,
     customSlippageTolerance,
     isSwapSupported: isSupported,
+    toAssetBalance,
+    fromAssetBalance,
+    nativeAssetBalance,
     onCustomSlippageToleranceChange,
     setFromAsset,
     setSwapToOrFrom,
@@ -709,6 +735,10 @@ export default function useSwap () {
     onSelectSlippageTolerance,
     onSelectTransactAsset,
     onSwapInputChange,
-    onFilterAssetList
+    onFilterAssetList,
+    selectedPreset,
+    setSelectedPreset,
+    onSelectPresetAmount,
+    clearPreset
   }
 }

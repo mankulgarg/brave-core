@@ -154,33 +154,16 @@ function Container (props: Props) {
   const [selectedWyreAsset, setSelectedWyreAsset] = React.useState<BraveWallet.BlockchainToken>(buyAssetOptions[0])
 
   const {
-    exchangeRate,
     filteredAssetList,
-    fromAmount,
     fromAsset,
     isFetchingSwapQuote,
-    isSwapButtonDisabled,
-    orderExpiration,
-    orderType,
-    slippageTolerance,
     swapValidationError,
     swapToOrFrom,
-    toAmount,
-    toAsset,
-    customSlippageTolerance,
     isSwapSupported,
     onSetFromAmount,
     setSwapToOrFrom,
-    onToggleOrderType,
-    onSwapQuoteRefresh,
-    flipSwapAssets,
-    onSubmitSwap,
-    onSelectExpiration,
-    onSelectSlippageTolerance,
-    onSwapInputChange,
     onFilterAssetList,
-    onSelectTransactAsset,
-    onCustomSlippageToleranceChange
+    onSelectTransactAsset
   } = useSwap()
 
   const {
@@ -220,16 +203,12 @@ function Container (props: Props) {
 
   const getSelectedAccountBalance = useBalance(selectedNetwork)
   const sendAssetBalance = getSelectedAccountBalance(selectedAccount, selectedSendAsset)
-  const fromAssetBalance = getSelectedAccountBalance(selectedAccount, fromAsset)
-  const toAssetBalance = getSelectedAccountBalance(selectedAccount, toAsset)
 
-  const onSelectPresetAmountFactory = usePreset(
-    selectedAccount,
-    selectedNetwork,
-    onSetFromAmount,
-    onSetSendAmount,
-    fromAsset,
-    selectedSendAsset
+  const onSelectPresetAmount = usePreset(
+    {
+      onSetAmount: onSetFromAmount,
+      asset: fromAsset
+    }
   )
 
   const onSetBuyAmount = (value: string) => {
@@ -872,7 +851,7 @@ function Container (props: Props) {
               <Send
                 onChangeSendView={onChangeSendView}
                 onInputChange={onInputChange}
-                onSelectPresetAmount={onSelectPresetAmountFactory('send')}
+                onSelectPresetAmount={onSelectPresetAmount}
                 onSubmit={onSubmitSend}
                 selectedAsset={selectedSendAsset}
                 selectedNetwork={selectedNetwork}
@@ -929,30 +908,8 @@ function Container (props: Props) {
           >
             <SendWrapper>
               <Swap
-                selectedNetwork={selectedNetwork}
-                fromAsset={fromAsset}
-                toAsset={toAsset}
-                fromAmount={fromAmount}
-                toAmount={toAmount}
-                exchangeRate={exchangeRate}
-                orderType={orderType}
-                orderExpiration={orderExpiration}
-                slippageTolerance={slippageTolerance}
                 isFetchingQuote={isFetchingSwapQuote}
-                isSubmitDisabled={isSwapButtonDisabled}
                 validationError={swapValidationError}
-                fromAssetBalance={fromAssetBalance}
-                toAssetBalance={toAssetBalance}
-                customSlippageTolerance={customSlippageTolerance}
-                onCustomSlippageToleranceChange={onCustomSlippageToleranceChange}
-                onToggleOrderType={onToggleOrderType}
-                onSelectExpiration={onSelectExpiration}
-                onSelectSlippageTolerance={onSelectSlippageTolerance}
-                onFlipAssets={flipSwapAssets}
-                onSubmitSwap={onSubmitSwap}
-                onQuoteRefresh={onSwapQuoteRefresh}
-                onSelectPresetAmount={onSelectPresetAmountFactory('swap')}
-                onInputChange={onSwapInputChange}
                 onFilterAssetList={onFilterAssetList}
                 onChangeSwapView={onChangeSwapView}
               />

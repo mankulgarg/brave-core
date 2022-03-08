@@ -2,7 +2,8 @@ import * as React from 'react'
 import {
   BraveWallet,
   BuySendSwapViewTypes,
-  UserAccountType
+  UserAccountType,
+  WalletState
 } from '../../../constants/types'
 
 import {
@@ -15,14 +16,11 @@ import {
 import {
   StyledWrapper
 } from './style'
+import { useSelector } from 'react-redux'
 
 export interface Props {
   selectedView: BuySendSwapViewTypes
-  accounts: UserAccountType[]
-  networkList: BraveWallet.NetworkInfo[]
   assetOptions: BraveWallet.BlockchainToken[]
-  selectedNetwork: BraveWallet.NetworkInfo
-  selectedAccount: UserAccountType
   onAddAsset: () => void
   onClickSelectAccount: (account: UserAccountType) => () => void
   onClickSelectNetwork: (network: BraveWallet.NetworkInfo) => () => void
@@ -34,11 +32,7 @@ export interface Props {
 function SelectHeader (props: Props) {
   const {
     selectedView,
-    accounts,
-    networkList,
     assetOptions,
-    selectedNetwork,
-    selectedAccount,
     onAddAsset,
     onClickSelectAccount,
     goBack,
@@ -46,6 +40,16 @@ function SelectHeader (props: Props) {
     onClickSelectNetwork,
     onAddNetwork
   } = props
+
+  // redux
+  const {
+    accounts,
+    networkList,
+    selectedAccount,
+    selectedNetwork
+  } = useSelector((state: {wallet: WalletState}) => {
+    return state.wallet
+  })
 
   return (
     <StyledWrapper>
