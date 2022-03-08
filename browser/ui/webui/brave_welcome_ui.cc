@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 
+#include "base/feature_list.h"
 #include "base/metrics/histogram_macros.h"
 #include "brave/browser/ui/webui/brave_webui_source.h"
 #include "brave/browser/ui/webui/settings/brave_import_data_handler.h"
@@ -128,10 +129,13 @@ std::string CountryIDToCountryString(int country_id) {
   return country_string;
 }
 
+// Prompt for P3A opt-in.
+const base::Feature kP3AOptIn{"P3AOptIn",
+                              base::FEATURE_DISABLED_BY_DEFAULT};
+
 // Returns whether the P3A opt-in prompt should be shown.
 bool IsP3AOptInEnabled() {
-  // Always return true for testing.
-  return true;
+  return base::FeatureList::IsEnabled(kP3AOptIn);
 }
 
 
