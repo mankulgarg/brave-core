@@ -70,7 +70,8 @@ export const mockAccount: WalletAccountType = {
   address: 'mockAddress',
   balance: '123456',
   accountType: 'Primary',
-  tokenBalanceRegistry: {}
+  tokenBalanceRegistry: {},
+  coin: BraveWallet.CoinType.ETH
 }
 
 export const mockAssetPrices: BraveWallet.AssetPrice[] = [

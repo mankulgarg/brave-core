@@ -34,9 +34,9 @@ const defaultState: PanelState = {
     decimals: 18,
     coin: BraveWallet.CoinType.ETH,
     data: {
-       ethData: {
+      ethData: {
         isEip1559: true
-       }
+      }
     }
   },
   signMessageData: [{
@@ -62,60 +62,64 @@ const defaultState: PanelState = {
   suggestedToken: undefined
 }
 
-const reducer = createReducer<PanelState>({}, defaultState)
+export const createPanelReducer = (initialState: PanelState) => {
+  const reducer = createReducer<PanelState>({}, initialState)
+  reducer.on(PanelActions.navigateTo, (state: any, selectedPanel: string) => {
+    const foundTitle = PanelTitles().find((title) => selectedPanel === title.id)
+    const panelTitle = foundTitle ? foundTitle.title : ''
 
-reducer.on(PanelActions.navigateTo, (state: any, selectedPanel: string) => {
-  const foundTitle = PanelTitles().find((title) => selectedPanel === title.id)
-  const panelTitle = foundTitle ? foundTitle.title : ''
+    return {
+      ...state,
+      selectedPanel,
+      panelTitle
+    }
+  })
 
-  return {
-    ...state,
-    selectedPanel,
-    panelTitle
-  }
-})
+  reducer.on(PanelActions.showConnectToSite, (state: any, payload: ShowConnectToSitePayload) => {
+    return {
+      ...state,
+      connectToSiteOrigin: payload.origin,
+      connectingAccounts: payload.accounts
+    }
+  })
 
-reducer.on(PanelActions.showConnectToSite, (state: any, payload: ShowConnectToSitePayload) => {
-  return {
-    ...state,
-    connectToSiteOrigin: payload.origin,
-    connectingAccounts: payload.accounts
-  }
-})
+  reducer.on(PanelActions.addEthereumChain, (state: any, networkPayload: EthereumChainPayload) => {
+    return {
+      ...state,
+      networkPayload: networkPayload.chain
+    }
+  })
 
-reducer.on(PanelActions.addEthereumChain, (state: any, networkPayload: EthereumChainPayload) => {
-  return {
-    ...state,
-    networkPayload: networkPayload.chain
-  }
-})
+  reducer.on(PanelActions.switchEthereumChain, (state: any, request: BraveWallet.SwitchChainRequest) => {
+    return {
+      ...state,
+      switchChainRequest: request
+    }
+  })
 
-reducer.on(PanelActions.switchEthereumChain, (state: any, request: BraveWallet.SwitchChainRequest) => {
-  return {
-    ...state,
-    switchChainRequest: request
-  }
-})
+  reducer.on(PanelActions.signMessage, (state: any, payload: SignMessagePayload[]) => {
+    return {
+      ...state,
+      signMessageData: payload
+    }
+  })
 
-reducer.on(PanelActions.signMessage, (state: any, payload: SignMessagePayload[]) => {
-  return {
-    ...state,
-    signMessageData: payload
-  }
-})
+  reducer.on(PanelActions.setHardwareWalletInteractionError, (state: any, payload?: HardwareWalletResponseCodeType) => {
+    return {
+      ...state,
+      hardwareWalletCode: payload
+    }
+  })
 
-reducer.on(PanelActions.setHardwareWalletInteractionError, (state: any, payload?: HardwareWalletResponseCodeType) => {
-  return {
-    ...state,
-    hardwareWalletCode: payload
-  }
-})
+  reducer.on(PanelActions.addSuggestToken, (state: any, payload: BraveWallet.AddSuggestTokenRequest) => {
+    return {
+      ...state,
+      suggestedToken: payload.token
+    }
+  })
+  return reducer
+}
 
-reducer.on(PanelActions.addSuggestToken, (state: any, payload: BraveWallet.AddSuggestTokenRequest) => {
-  return {
-    ...state,
-    suggestedToken: payload.token
-  }
-})
-
+const reducer = createPanelReducer(defaultState)
+export const panelReducer = reducer
 export default reducer
