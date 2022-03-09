@@ -1,6 +1,13 @@
+import * as React from 'react'
 import { renderHook } from '@testing-library/react-hooks'
+import { createPageReducer } from '../../page/reducers/page_reducer'
+import { mockPageState } from '../../stories/mock-data/mock-page-state'
+import { mockWalletState } from '../../stories/mock-data/mock-wallet-state'
+import { Provider } from 'react-redux'
+import { createStore, combineReducers } from 'redux'
 
-import { mockAccount, mockERC20Token, mockNetwork } from '../constants/mocks'
+import { mockERC20Token, mockAccount } from '../constants/mocks'
+import { createWalletReducer } from '../reducers/wallet_reducer'
 import usePreset from './select-preset'
 
 describe('usePreset hook', () => {
@@ -15,41 +22,47 @@ describe('usePreset hook', () => {
   ])('should compute %s correctly', (_, balance: string, percent, expected: string) => {
     const mockFunc = jest.fn()
 
+    const store = createStore(combineReducers({
+      wallet: createWalletReducer({
+        ...mockWalletState,
+        selectedAccount: { ...mockAccount, tokenBalanceRegistry: { [mockERC20Token.contractAddress.toLowerCase()]: balance } }
+      }),
+      page: createPageReducer(mockPageState)
+    }))
+
     const { result: { current: calcPresetAmount } } = renderHook(() => usePreset(
       {
-        selectedAccount: { ...mockAccount, tokenBalanceRegistry: { [mockERC20Token.contractAddress.toLowerCase()]: balance } },
-        selectedNetwork: mockNetwork,
-        onSetSwapFromAmount: mockFunc,
-        onSetSendAmount: jest.fn(),
-        swapAsset: mockERC20Token,
-        sendAsset: mockERC20Token
+        onSetAmount: mockFunc,
+        asset: mockERC20Token
       }
-    ))
+    ),
+      {
+        wrapper: ({ children }) => <Provider store={store}>{children}</Provider>
+      })
 
-    calcPresetAmount('swap')(percent)
+    calcPresetAmount(percent)
     expect(mockFunc.mock.calls.length).toBe(1)
     expect(mockFunc.mock.calls[0][0]).toBe(expected)
   })
 
   it('should not do anything if send/swap asset is undefined', () => {
     const mockOnSetFromAmount = jest.fn()
-    const mockOnSetSendAmount = jest.fn()
+
+    const store = createStore(combineReducers({
+      wallet: createWalletReducer(mockWalletState),
+      page: createPageReducer(mockPageState)
+    }))
 
     const { result: { current: calcPresetAmount } } = renderHook(() => usePreset(
       {
-        selectedAccount: mockAccount,
-        selectedNetwork: mockNetwork,
-        onSetSwapFromAmount: mockOnSetFromAmount,
-        onSetSendAmount: mockOnSetSendAmount,
-        swapAsset: undefined,
-        sendAsset: undefined
-      }
-    ))
+        onSetAmount: mockOnSetFromAmount,
+        asset: undefined
+      }),
+      {
+        wrapper: ({ children }) => <Provider store={store}>{children}</Provider>
+      })
 
-    calcPresetAmount('swap')(0.25)
+    calcPresetAmount(0.25)
     expect(mockOnSetFromAmount.mock.calls.length).toBe(0)
-
-    calcPresetAmount('send')(0.25)
-    expect(mockOnSetSendAmount.mock.calls.length).toBe(0)
   })
 })
