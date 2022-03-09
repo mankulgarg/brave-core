@@ -10,6 +10,7 @@ import { AccountAssetOptions } from '../../options/asset-options'
 
 // Hooks
 jest.mock('../async/lib')
+jest.mock('../async/bridge')
 import * as MockedLib from '../async/lib'
 import { TextEncoder, TextDecoder } from 'util'
 global.TextDecoder = TextDecoder as any
@@ -25,6 +26,10 @@ import { createPageReducer } from '../../page/reducers/page_reducer'
 // Mocks
 import { mockWalletState } from '../../stories/mock-data/mock-wallet-state'
 import { mockPageState } from '../../stories/mock-data/mock-page-state'
+import getAPIProxy from '../async/bridge'
+import { MockedWalletApiProxy } from '../async/__mocks__/bridge'
+
+const mockedProxy = getAPIProxy() as unknown as MockedWalletApiProxy
 
 jest.useFakeTimers()
 
@@ -540,6 +545,14 @@ describe('useSwap hook', () => {
         }),
         page: createPageReducer(mockPageState)
       }))
+      // set quote
+      mockedProxy.setMockedQuote({
+        ...mockQuote,
+        buyAmount: '1',
+        gasPrice: '10',
+        gas: '100000',
+        sellAmount: '10000000000000000000' // 10 BAT
+      })
 
       const { result, waitFor, waitForValueToChange } = renderHook(() => useSwap(
         // {
@@ -569,38 +582,15 @@ describe('useSwap hook', () => {
 
       // Step 3: Set a From asset + from amount, such that the value is greater than
       // token allowance, and wait for at least 1000ms to avoid debouncing.
-
-      // set quote
-      act(() => {
-        result.current.setSwapQuote({
-          ...mockQuote,
-          gasPrice: '10',
-          gas: '100000',
-          sellAmount: '10000000000000000000' // 10 BAT
-        })
-      })
-      await waitFor(() => {
-        expect(result.current.swapQuote).not.toBe(undefined)
-      })
-
-      // set-allowance
-      act(() => {
-        result.current.setAllowance('10')
-      })
-      await waitFor(() => {
-        expect(result.current.allowance).toBe('10')
-      })
-
       // set-from asset (causing issues)
-      // act(() => {
-      //   result.current.setFromAsset(AccountAssetOptions[1]) // From asset is BAT
-      // })
-      // await waitFor(() => {
-      //   expect(result.current.fromAsset).toBe(AccountAssetOptions[1])
-      //   // expect(result.current.fromAsset?.isErc20).toBe(AccountAssetOptions[1].isErc20)
-      //   // expect(result.current.fromAssetBalance).toBe('20000000000000000000')
-      // })
-
+      act(() => {
+        result.current.setFromAsset(AccountAssetOptions[1]) // From asset is BAT
+      })
+      await waitFor(() => {
+        expect(result.current.fromAsset).toBe(AccountAssetOptions[1])
+        expect(result.current.fromAsset?.isErc20).toBe(AccountAssetOptions[1].isErc20)
+        expect(result.current.fromAssetBalance).toBe('20000000000000000000')
+      })
       // set from-amount
       act(() => {
         result.current.setFromAmount('10000000000000000000') // From asset is BAT
@@ -616,6 +606,18 @@ describe('useSwap hook', () => {
       await waitFor(() => {
         expect(result.current.toAsset).toBe(AccountAssetOptions[0])
       })
+
+      // set-allowance
+      act(() => {
+        result.current.setAllowance('10')
+      })
+      await waitFor(() => {
+        expect(result.current.allowance).toBe('10')
+      })
+
+      // await waitFor(() => {
+      //   expect(result.current.swapQuote).not.toBe(undefined)
+      // })
 
       // OK: Assert for swapValidationError to be 'insufficientAllowance'.
       // KO: Test case times out.
