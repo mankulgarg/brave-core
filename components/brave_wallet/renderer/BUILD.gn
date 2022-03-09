@@ -4,6 +4,8 @@ source_set("renderer") {
     "brave_wallet_js_handler.h",
     "brave_wallet_response_helpers.cc",
     "brave_wallet_response_helpers.h",
+    "js_solana_provider.cc",
+    "js_solana_provider.h",
   ]
 
   deps = [
