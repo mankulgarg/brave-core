@@ -296,12 +296,12 @@ void SetEnvironment(const mojom::Environment environment) {
 }
 
 void SetSysInfo(const mojom::SysInfo& sys_info) {
-  g_sys_info.is_uncertain_future = sys_info.is_uncertain_future;
+  SysInfo().is_uncertain_future = sys_info.is_uncertain_future;
 }
 
 void SetBuildChannel(const bool is_release, const std::string& name) {
-  g_build_channel.is_release = is_release;
-  g_build_channel.name = name;
+  BuildChannel().is_release = is_release;
+  BuildChannel().name = name;
 }
 
 void MockLocaleHelper(const std::unique_ptr<brave_l10n::LocaleHelperMock>& mock,
