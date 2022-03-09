@@ -27,6 +27,13 @@ export default function useAssets (
   spotPrices: BraveWallet.AssetPrice[],
   getBuyAssets: () => Promise<BraveWallet.BlockchainToken[]>
 ) {
+  const isMounted = React.useRef(true)
+  React.useEffect(() => {
+      return () => {
+        isMounted.current = false
+      }
+  }, [])
+
   const { computeFiatAmount } = usePricing(spotPrices)
   const getBalance = useBalance(selectedNetwork)
   const nativeAsset = React.useMemo(
@@ -50,11 +57,13 @@ export default function useAssets (
   const [buyAssetOptions, setBuyAssetOptions] = React.useState<BraveWallet.BlockchainToken[]>([nativeAsset])
 
   React.useEffect(() => {
-    getBuyAssets().then(tokens => {
-      setBuyAssetOptions(tokens.map(token => ({
-        ...token,
-        logo: `chrome://erc-token-images/${token.logo}`
-      }) as BraveWallet.BlockchainToken))
+    isMounted.current && getBuyAssets().then(tokens => {
+      if (isMounted.current) {
+        setBuyAssetOptions(tokens.map(token => ({
+          ...token,
+          logo: `chrome://erc-token-images/${token.logo}`
+        }) as BraveWallet.BlockchainToken))
+      }
     }).catch(e => console.error(e))
   }, [])
 
