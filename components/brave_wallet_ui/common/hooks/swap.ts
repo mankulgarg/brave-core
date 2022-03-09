@@ -117,16 +117,6 @@ export default function useSwap ({ fromAsset: fromAssetProp, toAsset: toAssetPro
       full ? swapService.getTransactionPayload(swapParams) : swapService.getPriceQuote(swapParams)
     )
 
-    alert(full ? 'payload' : 'quote')
-    alert(JSON.stringify(quote))
-
-    console.log(
-      {
-        __type: full ? 'payload' : 'quote',
-        response: quote
-      }
-    )
-
     if (quote.success && quote.response) {
       if (isMounted) {
         setSwapError(undefined)
@@ -566,12 +556,6 @@ export default function useSwap ({ fromAsset: fromAssetProp, toAsset: toAssetPro
       .multiplyByDecimals(fromAsset.decimals)
 
     if (fromAmountWeiWrapped.gt(fromAssetBalance)) {
-      console.log(`
-        fromAsset: ${fromAsset.name}
-        fromAmountWeiWrapped: ${fromAmountWeiWrapped.format()}
-        fromAssetBalance: ${fromAssetBalance}
-        fromAmountWeiWrapped.gt(fromAssetBalance): ${fromAmountWeiWrapped.gt(fromAssetBalance)}
-      `)
        return 'insufficientBalance'
     }
 
@@ -582,13 +566,6 @@ export default function useSwap ({ fromAsset: fromAssetProp, toAsset: toAssetPro
     if (fromAsset.symbol === selectedNetwork.symbol && fromAmountWeiWrapped.plus(feesWrapped).gt(fromAssetBalance)) {
       return 'insufficientFundsForGas'
     }
-
-    console.log(`
-      allowance: ${allowance}
-      fromAmountWeiWrapped: ${fromAmountWeiWrapped.format()}
-      allowance !== undefined: ${allowance !== undefined}
-      allowance > fromAmountWeiWrapped: ${allowance ? new Amount(allowance).lt(fromAmountWeiWrapped) : 'no allowance'}
-    `)
 
     if (allowance !== undefined && new Amount(allowance).lt(fromAmountWeiWrapped)) {
       return 'insufficientAllowance'
