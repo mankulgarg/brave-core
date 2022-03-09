@@ -4,6 +4,8 @@
 // you can obtain one at http://mozilla.org/MPL/2.0/.
 
 import * as React from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import BigNumber from 'bignumber.js'
 
 // Constants
 import {
@@ -28,263 +30,61 @@ import { makeNetworkAsset } from '../../options/asset-options'
 // Utils
 import Amount from '../../utils/amount'
 import { debounce } from '../../../common/debounce'
+import { WalletActions } from '../actions'
+import getAPIProxy from '../async/bridge'
+import { hexStrToNumberArray } from '../../utils/hex-utils'
+import { getERC20Allowance, getIsSwapSupported } from '../async/lib'
 
 // Hooks
 import useBalance from './balance'
-import { useDispatch, useSelector } from 'react-redux'
-import { WalletActions } from '../actions'
-import getAPIProxy from '../async/bridge'
-import BigNumber from 'bignumber.js'
-import { hexStrToNumberArray } from '../../utils/hex-utils'
-import { getBuyAssets, getERC20Allowance, getIsSwapSupported } from '../async/lib'
-import useAssets from './assets'
 import usePreset from './select-preset'
 
 const SWAP_VALIDATION_ERROR_CODE = 100
 
+function useIsMounted () {
+  const isMounted = React.useRef(true)
+  React.useEffect(() => {
+    return () => {
+      isMounted.current = false
+    }
+  }, [])
+  return isMounted
+}
+
 export default function useSwap () {
   // redux
   const {
-    accounts,
-    fullTokenList,
     selectedAccount,
     selectedNetwork,
-    transactionSpotPrices,
+    fullTokenList,
     userVisibleTokensInfo
   } = useSelector(({ wallet }: { wallet: WalletState }) => wallet)
   const dispatch = useDispatch()
 
-  // assets
-  const getBalance = useBalance(selectedNetwork)
-  const {
-    swapAssetOptions
-  } = useAssets(
-    accounts,
-    selectedAccount,
-    selectedNetwork,
-    fullTokenList,
-    userVisibleTokensInfo,
-    transactionSpotPrices,
-    getBuyAssets
-  )
-
+  // State
   const [swapError, setSwapError] = React.useState<SwapErrorResponse | undefined>(undefined)
   const [swapQuote, setSwapQuote] = React.useState<BraveWallet.SwapResponse | undefined>(undefined)
-  const [selectedPreset, setSelectedPreset] = React.useState<AmountPresetTypes | undefined>()
+  const [selectedPreset, setSelectedPreset] = React.useState<AmountPresetTypes | undefined>(undefined)
   const [exchangeRate, setExchangeRate] = React.useState('')
   const [fromAmount, setFromAmount] = React.useState('')
-  const [fromAsset, setFromAsset] = React.useState<BraveWallet.BlockchainToken | undefined>(swapAssetOptions[0])
+  const [fromAsset, setFromAsset] = React.useState<BraveWallet.BlockchainToken | undefined>(undefined)
   const [orderExpiration, setOrderExpiration] = React.useState<ExpirationPresetObjectType>(ExpirationPresetOptions[0])
   const [orderType, setOrderType] = React.useState<OrderTypes>('market')
   const [slippageTolerance, setSlippageTolerance] = React.useState<SlippagePresetObjectType>(SlippagePresetOptions[0])
   const [customSlippageTolerance, setCustomSlippageTolerance] = React.useState<string>('')
   const [toAmount, setToAmount] = React.useState('')
-  const [toAsset, setToAsset] = React.useState<BraveWallet.BlockchainToken | undefined>(swapAssetOptions[1])
-  const [filteredAssetList, setFilteredAssetList] = React.useState<BraveWallet.BlockchainToken[]>(swapAssetOptions)
+  const [toAsset, setToAsset] = React.useState<BraveWallet.BlockchainToken | undefined>(undefined)
+  const [filteredAssetList, setFilteredAssetList] = React.useState<BraveWallet.BlockchainToken[]>([])
   const [swapToOrFrom, setSwapToOrFrom] = React.useState<ToOrFromType>('from')
   const [allowance, setAllowance] = React.useState<string | undefined>(undefined)
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [isSupported, setIsSupported] = React.useState<boolean>(false)
 
-  const nativeAsset = React.useMemo(
-    () => makeNetworkAsset(selectedNetwork),
-    [selectedNetwork]
-  )
+  // custom hooks
+  const isMounted = useIsMounted()
+  const getBalance = useBalance(selectedNetwork) // asets
 
-  React.useEffect(() => {
-    setFromAsset(swapAssetOptions[0])
-    setToAsset(swapAssetOptions[1])
-  }, [swapAssetOptions])
-
-  React.useEffect(() => {
-    getIsSwapSupported(selectedNetwork).then(
-      (supported) => setIsSupported(supported)
-    )
-  }, [selectedNetwork])
-
-  React.useEffect(() => {
-    if (!fromAsset) {
-      return
-    }
-
-    if (!fromAsset.isErc20) {
-      setAllowance(undefined)
-      return
-    }
-
-    if (!swapQuote) {
-      setAllowance(undefined)
-      return
-    }
-
-    const { allowanceTarget } = swapQuote
-
-    getERC20Allowance(fromAsset.contractAddress, selectedAccount.address, allowanceTarget)
-      .then(value => setAllowance(value))
-      .catch(e => console.log(e))
-  }, [fromAsset, swapQuote, selectedAccount])
-
-  const fromAssetBalance = React.useMemo(() => getBalance(selectedAccount, fromAsset), [selectedAccount, fromAsset])
-  const nativeAssetBalance = React.useMemo(() => getBalance(selectedAccount, nativeAsset), [selectedAccount, nativeAsset])
-  const toAssetBalance = React.useMemo(() => getBalance(selectedAccount, toAsset), [selectedAccount, toAsset])
-
-  const feesWrapped = React.useMemo(() => {
-    if (!swapQuote) {
-      return new Amount('0')
-    }
-
-    // NOTE: Swap will eventually use EIP-1559 gas fields, but we rely on
-    // gasPrice as a fee-ceiling for validation of inputs.
-    const { gasPrice, gas } = swapQuote
-    const gasPriceWrapped = new Amount(gasPrice)
-    const gasWrapped = new Amount(gas)
-    return gasPriceWrapped.times(gasWrapped)
-  }, [swapQuote])
-
-  const hasDecimalsOverflow = React.useCallback(
-    (amount: string, asset?: BraveWallet.BlockchainToken) => {
-      if (!asset) {
-        return false
-      }
-
-      const amountBaseWrapped = new Amount(amount).multiplyByDecimals(asset.decimals)
-      return amountBaseWrapped.value && amountBaseWrapped.value.decimalPlaces() > 0
-    }, []
-  )
-
-  const swapValidationError: SwapValidationErrorType | undefined = React.useMemo(() => {
-    if (!fromAsset || !toAsset) {
-      return
-    }
-
-    // No validation to perform when From and To amounts are empty, since quote
-    // is not fetched.
-    if (!fromAmount && !toAmount) {
-      return
-    }
-
-    if (hasDecimalsOverflow(fromAmount, fromAsset)) {
-      return 'fromAmountDecimalsOverflow'
-    }
-
-    if (hasDecimalsOverflow(toAmount, toAsset)) {
-      return 'toAmountDecimalsOverflow'
-    }
-
-    const fromAmountWeiWrapped = new Amount(fromAmount)
-      .multiplyByDecimals(fromAsset.decimals)
-
-    if (fromAmountWeiWrapped.gt(fromAssetBalance)) {
-      return 'insufficientBalance'
-    }
-
-    if (feesWrapped.gt(nativeAssetBalance)) {
-      return 'insufficientFundsForGas'
-    }
-
-    if (fromAsset.symbol === selectedNetwork.symbol && fromAmountWeiWrapped.plus(feesWrapped).gt(fromAssetBalance)) {
-      return 'insufficientFundsForGas'
-    }
-
-    if (allowance !== undefined && new Amount(allowance).lt(fromAmountWeiWrapped)) {
-      return 'insufficientAllowance'
-    }
-
-    if (swapError === undefined) {
-      return
-    }
-
-    const { code, validationErrors } = swapError
-    switch (code) {
-      case SWAP_VALIDATION_ERROR_CODE:
-        if (validationErrors?.find(err => err.reason === 'INSUFFICIENT_ASSET_LIQUIDITY')) {
-          return 'insufficientLiquidity'
-        }
-        break
-
-      default:
-        return 'unknownError'
-    }
-
-    return undefined
-  }, [
-    fromAsset,
-    fromAmount,
-    toAsset,
-    toAmount,
-    fromAssetBalance,
-    nativeAssetBalance,
-    feesWrapped,
-    swapError,
-    allowance
-  ])
-
-  /**
-   * React effect to extract fields from the swap quote and write the relevant
-   * fields to the state.
-   */
-  React.useEffect(() => {
-    if (!swapQuote) {
-      setFromAmount('')
-      setToAmount('')
-      setExchangeRate('')
-      return
-    }
-
-    if (!fromAsset || !toAsset) {
-      return
-    }
-
-    const {
-      buyAmount,
-      sellAmount,
-      price,
-
-      // The two fields below use the underlying native asset for other EVM
-      // compatible networks, even though they are  called *ToEthRate.
-      buyTokenToEthRate,
-      sellTokenToEthRate
-    } = swapQuote
-
-    setFromAmount(new Amount(sellAmount)
-      .divideByDecimals(fromAsset.decimals)
-      .format())
-
-    setToAmount(new Amount(buyAmount)
-      .divideByDecimals(toAsset.decimals)
-      .format())
-
-    /**
-     * Price computation block
-     *
-     * Price returned by 0x is inverted when the user enters the amount in the
-     * To field. In such a case, we use an approximate price computed from ETH
-     * rates.
-     *
-     * Example:
-     *   let x = DAI-ETH rate
-     *   let y = BAT-ETH rate
-     *   => DAI-BAT rate = x / y
-     *
-     * If the approximate price is numerically close to the quoted price, we
-     * consider the latter. This is typically when the user modifies the amount
-     * in the From field.
-     */
-    const priceWrapped = new Amount(price)
-    const approxPriceWrapped = new Amount(buyTokenToEthRate).div(sellTokenToEthRate)
-    let bestEstimatePriceWrapped
-    if (approxPriceWrapped.div(priceWrapped).eq(new Amount(1))) {
-      bestEstimatePriceWrapped = priceWrapped
-    } else if (priceWrapped.div(approxPriceWrapped).eq(new Amount(1))) {
-      bestEstimatePriceWrapped = priceWrapped
-    } else {
-      bestEstimatePriceWrapped = approxPriceWrapped
-    }
-
-    const bestEstimatePrice = bestEstimatePriceWrapped.format(6)
-    setExchangeRate(bestEstimatePrice)
-  }, [swapQuote])
-
+  // Callbacks / methods
   const fetchSwapQuote = React.useCallback(async (payload: SwapParamsPayloadType) => {
     const { swapService, ethTxManagerProxy } = getAPIProxy()
 
@@ -313,8 +113,10 @@ export default function useSwap () {
     )
 
     if (quote.success && quote.response) {
-      setSwapError(undefined)
-      setSwapQuote(quote.response)
+      if (isMounted) {
+        setSwapError(undefined)
+        setSwapQuote(quote.response)
+      }
 
       if (full) {
         const {
@@ -354,13 +156,18 @@ export default function useSwap () {
         }
 
         dispatch(WalletActions.sendTransaction(params))
-        setSwapError(undefined)
-        setSwapQuote(undefined)
+
+        if (isMounted) {
+          setSwapError(undefined)
+          setSwapQuote(undefined)
+        }
       }
     } else if (quote.errorResponse) {
       try {
         const err = JSON.parse(quote.errorResponse) as SwapErrorResponse
-        setSwapError(err)
+        if (isMounted) {
+          setSwapError(err)
+        }
       } catch (e) {
         console.error(`[swap] error parsing response: ${e}`)
       } finally {
@@ -368,6 +175,17 @@ export default function useSwap () {
       }
     }
   }, [])
+
+  const hasDecimalsOverflow = React.useCallback(
+    (amount: string, asset?: BraveWallet.BlockchainToken) => {
+      if (!asset) {
+        return false
+      }
+
+      const amountBaseWrapped = new Amount(amount).multiplyByDecimals(asset.decimals)
+      return amountBaseWrapped.value && amountBaseWrapped.value.decimalPlaces() > 0
+    }, []
+  )
 
   /**
    * onSwapParamsChange() is triggered whenever a change in the swap fields
@@ -377,7 +195,7 @@ export default function useSwap () {
    * @param {Object} state     State fields used to prevent recreating the
    *                           function on change.
    */
-  const onSwapParamsChange = React.useCallback((
+  const onSwapParamsChange = React.useCallback(async (
     overrides: {
       toOrFrom: ToOrFromType
       fromAsset?: BraveWallet.BlockchainToken
@@ -483,7 +301,7 @@ export default function useSwap () {
      * STEP 5: Fetch the swap quote asynchronously.
      */
     setIsLoading(true)
-    fetchSwapQuote({
+    await fetchSwapQuote({
       fromAsset: fromAssetNext,
       fromAssetAmount: fromAmountWeiWrapped?.format(),
       toAsset: toAssetNext,
@@ -495,17 +313,12 @@ export default function useSwap () {
     })
   }, [selectedAccount, selectedNetwork, fromAsset, toAsset])
 
-  // Set isLoading to false as soon as:
-  //  - swap quote has been fetched.
-  //  - error from 0x API is available in rawError.
-  React.useEffect(() => setIsLoading(false), [swapQuote, swapError])
-
-  const onSwapQuoteRefresh = () => {
+  const onSwapQuoteRefresh = async () => {
     const customSlippage = {
       id: 4,
       slippage: Number(customSlippageTolerance)
     }
-    onSwapParamsChange(
+    await onSwapParamsChange(
       { toOrFrom: 'from', slippageTolerance: customSlippageTolerance ? customSlippage : slippageTolerance },
       { fromAmount, toAmount }
     )
@@ -635,28 +448,6 @@ export default function useSwap () {
     )
   }
 
-  const isSwapButtonDisabled = React.useMemo(() => {
-    return (
-      isLoading ||
-      swapQuote === undefined ||
-      fromAsset === undefined ||
-      toAsset === undefined ||
-      (swapValidationError && swapValidationError !== 'insufficientAllowance') ||
-      new Amount(toAmount).isUndefined() ||
-      new Amount(toAmount).isZero() ||
-      new Amount(fromAmount).isUndefined() ||
-      new Amount(fromAmount).isZero()
-    )
-  }, [
-    toAmount,
-    fromAmount,
-    swapQuote,
-    swapValidationError,
-    isLoading,
-    fromAsset,
-    toAsset
-  ])
-
   const onSelectTransactAsset = (asset: BraveWallet.BlockchainToken, toOrFrom: ToOrFromType) => {
     if (toOrFrom === 'from') {
       setFromAsset(asset)
@@ -702,43 +493,303 @@ export default function useSwap () {
     }
   )
 
+  // memos
+  const nativeAsset = React.useMemo(
+    () => makeNetworkAsset(selectedNetwork),
+    [selectedNetwork]
+  )
+  const fromAssetBalance = React.useMemo(() => getBalance(selectedAccount, fromAsset), [selectedAccount, fromAsset])
+  const nativeAssetBalance = React.useMemo(() => getBalance(selectedAccount, nativeAsset), [selectedAccount, nativeAsset])
+  const toAssetBalance = React.useMemo(() => getBalance(selectedAccount, toAsset), [selectedAccount, toAsset])
+
+  const feesWrapped = React.useMemo(() => {
+    if (!swapQuote) {
+      return new Amount('0')
+    }
+
+    // NOTE: Swap will eventually use EIP-1559 gas fields, but we rely on
+    // gasPrice as a fee-ceiling for validation of inputs.
+    const { gasPrice, gas } = swapQuote
+    const gasPriceWrapped = new Amount(gasPrice)
+    const gasWrapped = new Amount(gas)
+    return gasPriceWrapped.times(gasWrapped)
+  }, [swapQuote])
+
+  const swapAssetOptions: BraveWallet.BlockchainToken[] = React.useMemo(() => {
+    return [
+      nativeAsset,
+      ...fullTokenList.filter((asset) => asset.symbol.toUpperCase() === 'BAT'),
+      ...userVisibleTokensInfo
+        .filter(asset => !['BAT', nativeAsset.symbol.toUpperCase()].includes(asset.symbol.toUpperCase())),
+      ...fullTokenList
+        .filter(asset => !['BAT', nativeAsset.symbol.toUpperCase()].includes(asset.symbol.toUpperCase()))
+        .filter(asset => !userVisibleTokensInfo
+          .some(token => token.symbol.toUpperCase() === asset.symbol.toUpperCase()))
+    ]
+  }, [fullTokenList, userVisibleTokensInfo, nativeAsset])
+
+  const swapValidationError: SwapValidationErrorType | undefined = React.useMemo(() => {
+    if (!fromAsset || !toAsset) {
+      return
+    }
+
+    // No validation to perform when From and To amounts are empty, since quote
+    // is not fetched.
+    if (!fromAmount && !toAmount) {
+      return
+    }
+
+    if (hasDecimalsOverflow(fromAmount, fromAsset)) {
+      return 'fromAmountDecimalsOverflow'
+    }
+
+    if (hasDecimalsOverflow(toAmount, toAsset)) {
+      return 'toAmountDecimalsOverflow'
+    }
+
+    const fromAmountWeiWrapped = new Amount(fromAmount)
+      .multiplyByDecimals(fromAsset.decimals)
+
+    console.log(`
+      fromAsset: ${fromAsset.name}
+      fromAmountWeiWrapped: ${fromAmountWeiWrapped.format()}
+      fromAssetBalance: ${fromAssetBalance}
+      fromAmountWeiWrapped.gt(fromAssetBalance): ${fromAmountWeiWrapped.gt(fromAssetBalance)}
+    `)
+    if (fromAmountWeiWrapped.gt(fromAssetBalance)) {
+      return 'insufficientBalance'
+    }
+
+    if (feesWrapped.gt(nativeAssetBalance)) {
+      return 'insufficientFundsForGas'
+    }
+
+    if (fromAsset.symbol === selectedNetwork.symbol && fromAmountWeiWrapped.plus(feesWrapped).gt(fromAssetBalance)) {
+      return 'insufficientFundsForGas'
+    }
+
+    console.log(`
+      allowance: ${allowance}
+      fromAmountWeiWrapped: ${fromAmountWeiWrapped.format()}
+      allowance !== undefined: ${allowance !== undefined}
+      allowance > fromAmountWeiWrapped: ${allowance ? new Amount(allowance).lt(fromAmountWeiWrapped) : 'no allowance'}
+    `)
+
+    if (allowance !== undefined && new Amount(allowance).lt(fromAmountWeiWrapped)) {
+      return 'insufficientAllowance'
+    }
+
+    if (swapError === undefined) {
+      return
+    }
+
+    const { code, validationErrors } = swapError
+    switch (code) {
+      case SWAP_VALIDATION_ERROR_CODE:
+        if (validationErrors?.find(err => err.reason === 'INSUFFICIENT_ASSET_LIQUIDITY')) {
+          return 'insufficientLiquidity'
+        }
+        break
+
+      default:
+        return 'unknownError'
+    }
+
+    return undefined
+  }, [
+    fromAsset,
+    fromAmount,
+    toAsset,
+    toAmount,
+    fromAssetBalance,
+    nativeAssetBalance,
+    feesWrapped,
+    swapError,
+    allowance
+  ])
+
+  const isSwapButtonDisabled = React.useMemo(() => {
+    return (
+      isLoading ||
+      swapQuote === undefined ||
+      fromAsset === undefined ||
+      toAsset === undefined ||
+      (swapValidationError && swapValidationError !== 'insufficientAllowance') ||
+      new Amount(toAmount).isUndefined() ||
+      new Amount(toAmount).isZero() ||
+      new Amount(fromAmount).isUndefined() ||
+      new Amount(fromAmount).isZero()
+    )
+  }, [
+    toAmount,
+    fromAmount,
+    swapQuote,
+    swapValidationError,
+    isLoading,
+    fromAsset,
+    toAsset
+  ])
+
+  // Effects
+  React.useEffect(() => {
+    setFilteredAssetList(swapAssetOptions)
+    setFromAsset(swapAssetOptions[0])
+    setToAsset(swapAssetOptions[1])
+  }, [swapAssetOptions])
+
+  React.useEffect(() => {
+    isMounted.current && getIsSwapSupported(selectedNetwork).then(
+      (supported) => {
+        if (isMounted.current) {
+          setIsSupported(supported)
+        }
+      }
+    )
+  }, [selectedNetwork])
+
+  React.useEffect(() => {
+    if (!fromAsset) {
+      return
+    }
+
+    if (!fromAsset.isErc20) {
+      setAllowance(undefined)
+      return
+    }
+
+    if (!swapQuote) {
+      setAllowance(undefined)
+      return
+    }
+
+    const { allowanceTarget } = swapQuote
+
+    isMounted.current && getERC20Allowance(fromAsset.contractAddress, selectedAccount.address, allowanceTarget)
+      .then(value => {
+        if (isMounted.current) {
+          setAllowance(value)
+        }
+      })
+      .catch(e => console.log(e))
+  }, [fromAsset, swapQuote, selectedAccount])
+
+  /**
+   * React effect to extract fields from the swap quote and write the relevant
+   * fields to the state.
+   */
+  React.useEffect(() => {
+    if (!swapQuote) {
+      setFromAmount('')
+      setToAmount('')
+      setExchangeRate('')
+      return
+    }
+
+    if (!fromAsset || !toAsset) {
+      return
+    }
+
+    const {
+      buyAmount,
+      sellAmount,
+      price,
+
+      // The two fields below use the underlying native asset for other EVM
+      // compatible networks, even though they are  called *ToEthRate.
+      buyTokenToEthRate,
+      sellTokenToEthRate
+    } = swapQuote
+
+    setFromAmount(new Amount(sellAmount)
+      .divideByDecimals(fromAsset.decimals)
+      .format())
+
+    setToAmount(new Amount(buyAmount)
+      .divideByDecimals(toAsset.decimals)
+      .format())
+
+    /**
+     * Price computation block
+     *
+     * Price returned by 0x is inverted when the user enters the amount in the
+     * To field. In such a case, we use an approximate price computed from ETH
+     * rates.
+     *
+     * Example:
+     *   let x = DAI-ETH rate
+     *   let y = BAT-ETH rate
+     *   => DAI-BAT rate = x / y
+     *
+     * If the approximate price is numerically close to the quoted price, we
+     * consider the latter. This is typically when the user modifies the amount
+     * in the From field.
+     */
+    const priceWrapped = new Amount(price)
+    const approxPriceWrapped = new Amount(buyTokenToEthRate).div(sellTokenToEthRate)
+    let bestEstimatePriceWrapped
+    if (approxPriceWrapped.div(priceWrapped).eq(new Amount(1))) {
+      bestEstimatePriceWrapped = priceWrapped
+    } else if (priceWrapped.div(approxPriceWrapped).eq(new Amount(1))) {
+      bestEstimatePriceWrapped = priceWrapped
+    } else {
+      bestEstimatePriceWrapped = approxPriceWrapped
+    }
+
+    const bestEstimatePrice = bestEstimatePriceWrapped.format(6)
+    setExchangeRate(bestEstimatePrice)
+  }, [swapQuote])
+
+  // Set isLoading to false as soon as:
+  //  - swap quote has been fetched.
+  //  - error from 0x API is available in rawError.
+  React.useEffect(() => setIsLoading(false), [swapQuote, swapError])
+
   return {
+    clearPreset,
+    customSlippageTolerance,
     exchangeRate,
     filteredAssetList,
+    flipSwapAssets,
     fromAmount,
     fromAsset,
+    fromAssetBalance,
     isFetchingSwapQuote: isLoading,
     isSwapButtonDisabled,
+    isSwapSupported: isSupported,
+    nativeAssetBalance,
+    onCustomSlippageToleranceChange,
+    onFilterAssetList,
+    onSelectExpiration,
+    onSelectPresetAmount,
+    onSelectSlippageTolerance,
+    onSelectTransactAsset,
+    onSetExchangeRate,
+    onSetFromAmount,
+    onSetToAmount,
+    onSubmitSwap,
+    onSwapInputChange,
+    onSwapQuoteRefresh,
+    onToggleOrderType,
     orderExpiration,
     orderType,
+    selectedPreset,
+    setFromAmount,
+    setFromAsset,
+    setSelectedPreset,
+    setSwapError,
+    setSwapQuote,
+    setSwapToOrFrom,
+    setToAmount,
+    setToAsset,
     slippageTolerance,
     swapToOrFrom,
     swapValidationError,
     toAmount,
     toAsset,
-    customSlippageTolerance,
-    isSwapSupported: isSupported,
     toAssetBalance,
-    fromAssetBalance,
-    nativeAssetBalance,
-    onCustomSlippageToleranceChange,
-    setFromAsset,
-    setSwapToOrFrom,
-    onToggleOrderType,
-    onSwapQuoteRefresh,
-    onSetFromAmount,
-    onSetToAmount,
-    flipSwapAssets,
-    onSubmitSwap,
-    onSetExchangeRate,
-    onSelectExpiration,
-    onSelectSlippageTolerance,
-    onSelectTransactAsset,
-    onSwapInputChange,
-    onFilterAssetList,
-    selectedPreset,
-    setSelectedPreset,
-    onSelectPresetAmount,
-    clearPreset
+    setAllowance,
+    allowance,
+    swapAssetOptions,
+    swapQuote
   }
 }
