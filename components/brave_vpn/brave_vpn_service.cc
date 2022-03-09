@@ -787,6 +787,7 @@ void BraveVpnService::CreateSupportTicket(
   dict.SetStringKey("payment-validation-data", "");
 
   std::string request_body = CreateJSONRequestBody(dict);
+  LOG(ERROR) << " : sending " << request_body;
   OAuthRequest(base_url, "POST", request_body, std::move(internal_callback));
 }
 
@@ -1312,7 +1313,7 @@ void BraveVpnService::OnCreateSupportTicket(
     const std::string& body,
     const base::flat_map<std::string, std::string>& headers) {
   bool success = status == 200;
-  VLOG(2) << "OnCreateSupportTicket success=" << success
+  LOG(ERROR) << "OnCreateSupportTicket success=" << success
           << "\nresponse_code=" << status << "\nbody=[[" << body << "]]";
   std::move(callback).Run(success, body);
 }

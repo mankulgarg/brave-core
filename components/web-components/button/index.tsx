@@ -44,7 +44,7 @@ export default function Button (props: Props) {
           [style.isPrimary]: props.isPrimary,
           [style.isTertiary]: props.isTertiary && !props.isPrimary,
           [style.isLoading]: props.isLoading,
-          [style.isCallToAction]: props.isCallToAction,
+          [style.isCallToAction]: props.isCallToAction
         }
       )}
       disabled={props.isDisabled}

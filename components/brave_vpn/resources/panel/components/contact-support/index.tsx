@@ -1,10 +1,9 @@
 import * as React from 'react'
 import Button from '$web-components/button'
 import Select from '$web-components/select'
-import TextInput, { Textarea} from '$web-components/input'
+import TextInput, { Textarea } from '$web-components/input'
 import Toggle from '$web-components/toggle'
 import { getLocale } from '../../../../../common/locale'
-//import { useSelector } from '../../state/hooks'
 import * as S from './style'
 import getPanelBrowserAPI, * as BraveVPN from '../../api/panel_browser_api'
 import { CaratStrongLeftIcon } from 'brave-ui/components/icons'
@@ -20,8 +19,8 @@ interface ContactSupportInputFields {
 }
 
 interface ContactSupportToggleFields {
-  shareHostname: boolean,
-  shareAppVersion: boolean,
+  shareHostname: boolean
+  shareAppVersion: boolean
   shareOsVersion: boolean
 }
 
@@ -48,16 +47,14 @@ function ContactSupport (props: Props) {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>()
   const [, setRemoteSubmissionError] = React.useState<string>()
 
-
   // Get possible values to submit
   React.useEffect(() => {
     getPanelBrowserAPI().serviceHandler.getSupportData()
       .then(setSupportData)
   }, [])
 
-
-  function getOnChangeField<T extends BaseType = BaseType>(key: keyof ContactSupportInputFields) {
-    return function(e: T) {
+  function getOnChangeField<T extends BaseType = BaseType> (key: keyof ContactSupportInputFields) {
+    return function (e: T) {
       console.log(setFormData)
       const value = (typeof e === 'string' || typeof e === 'number') ? e : e.currentTarget.value
       if (formData[key] === value) {
@@ -71,7 +68,7 @@ function ContactSupport (props: Props) {
   }
 
   function getOnChangeToggle (key: keyof ContactSupportToggleFields) {
-    return function(isOn: boolean) {
+    return function (isOn: boolean) {
       if (formData[key] === isOn) {
         return
       }
@@ -130,7 +127,7 @@ function ContactSupport (props: Props) {
           </S.BackButton>
         </S.PanelHeader>
 
-        <S.Form onSubmit={e => {e.preventDefault()}}>
+        <S.Form onSubmit={e => { e.preventDefault() }}>
           <TextInput
             label={'Your email address'}
             isRequired={true}

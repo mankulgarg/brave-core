@@ -38,6 +38,6 @@ export default function getPanelBrowserAPI () {
   return panelBrowserAPIInstance
 }
 
-export function setPanelBrowserAPI_ForTesting (api: API) {
+export function setPanelBrowserApiForTesting (api: API) {
   panelBrowserAPIInstance = api
 }

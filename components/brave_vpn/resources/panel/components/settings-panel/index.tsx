@@ -6,7 +6,7 @@ import * as S from './style'
 import { CaratStrongLeftIcon } from 'brave-ui/components/icons'
 
 interface Props {
-  closeSettingsPanel: React.MouseEventHandler<HTMLButtonElement>,
+  closeSettingsPanel: React.MouseEventHandler<HTMLButtonElement>
   showContactSupport: React.MouseEventHandler<HTMLAnchorElement>
 }
 

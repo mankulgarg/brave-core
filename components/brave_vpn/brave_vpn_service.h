@@ -138,6 +138,7 @@ class BraveVpnService :
   void GetSubscriberCredentialV12(ResponseCallback callback,
                                   const std::string& payments_environment,
                                   const std::string& monthly_pass);
+
  private:
 #if !defined(OS_ANDROID)
   friend class BraveAppMenuBrowserTest;

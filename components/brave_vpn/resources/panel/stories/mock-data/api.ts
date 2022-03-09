@@ -3,12 +3,12 @@ import { mockRegionList } from './region-list'
 
 const doNothing = () => {}
 
-BraveVPN.setPanelBrowserAPI_ForTesting({
+BraveVPN.setPanelBrowserApiForTesting({
   pageCallbackRouter: {
   },
   panelHandler: {
     showUI: doNothing,
-    closeUI: doNothing,
+    closeUI: doNothing
   },
   serviceHandler: {
     addObserver: doNothing,
@@ -34,6 +34,7 @@ BraveVPN.setPanelBrowserAPI_ForTesting({
       hostname: 'site.example.com'
     }),
     createSupportTicket: (email: string, subject: string, body: string) => Promise.resolve({
+      success: true,
       response: 'OK'
     })
   }
