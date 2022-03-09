@@ -66,7 +66,6 @@ import { GetNetworkInfo } from '../utils/network-utils'
 import {
   findENSAddress,
   findUnstoppableDomainAddress,
-  getBuyAssets,
   getChecksumEthAddress,
   getERC20Allowance
 } from '../common/async/lib'
@@ -142,29 +141,24 @@ function Container (props: Props) {
     buyAssetOptions,
     panelUserAssetList
   } = useAssets(
-    accounts,
     selectedAccount,
     selectedNetwork,
-    props.wallet.fullTokenList,
     userVisibleTokensInfo,
-    transactionSpotPrices,
-    getBuyAssets
+    transactionSpotPrices
   )
 
   const [selectedWyreAsset, setSelectedWyreAsset] = React.useState<BraveWallet.BlockchainToken>(buyAssetOptions[0])
 
+  const swap = useSwap()
   const {
     filteredAssetList,
-    fromAsset,
-    isFetchingSwapQuote,
-    swapValidationError,
-    swapToOrFrom,
     isSwapSupported,
     onSetFromAmount,
     setSwapToOrFrom,
-    onFilterAssetList,
-    onSelectTransactAsset
-  } = useSwap()
+    swapToOrFrom,
+    onSelectTransactAsset,
+    fromAsset
+  } = swap
 
   const {
     onSetSendAmount,
@@ -190,7 +184,7 @@ function Container (props: Props) {
     props.wallet.fullTokenList
   )
 
-  React.useMemo(() => {
+  React.useEffect(() => {
     setSelectedAccounts([selectedAccount])
   }, [selectedAccount])
 
@@ -908,9 +902,7 @@ function Container (props: Props) {
           >
             <SendWrapper>
               <Swap
-                isFetchingQuote={isFetchingSwapQuote}
-                validationError={swapValidationError}
-                onFilterAssetList={onFilterAssetList}
+                {...swap}
                 onChangeSwapView={onChangeSwapView}
               />
             </SendWrapper>

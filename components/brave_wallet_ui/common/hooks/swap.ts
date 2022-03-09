@@ -51,7 +51,12 @@ function useIsMounted () {
   return isMounted
 }
 
-export default function useSwap () {
+interface Args {
+  fromAsset?: BraveWallet.BlockchainToken
+  toAsset?: BraveWallet.BlockchainToken
+}
+
+export default function useSwap ({ fromAsset: fromAssetProp, toAsset: toAssetProp }: Args = {}) {
   // redux
   const {
     selectedAccount,
@@ -62,27 +67,27 @@ export default function useSwap () {
   const dispatch = useDispatch()
 
   // State
-  const [swapError, setSwapError] = React.useState<SwapErrorResponse | undefined>(undefined)
-  const [swapQuote, setSwapQuote] = React.useState<BraveWallet.SwapResponse | undefined>(undefined)
-  const [selectedPreset, setSelectedPreset] = React.useState<AmountPresetTypes | undefined>(undefined)
-  const [exchangeRate, setExchangeRate] = React.useState('')
-  const [fromAmount, setFromAmount] = React.useState('')
-  const [fromAsset, setFromAsset] = React.useState<BraveWallet.BlockchainToken | undefined>(undefined)
-  const [orderExpiration, setOrderExpiration] = React.useState<ExpirationPresetObjectType>(ExpirationPresetOptions[0])
-  const [orderType, setOrderType] = React.useState<OrderTypes>('market')
-  const [slippageTolerance, setSlippageTolerance] = React.useState<SlippagePresetObjectType>(SlippagePresetOptions[0])
-  const [customSlippageTolerance, setCustomSlippageTolerance] = React.useState<string>('')
-  const [toAmount, setToAmount] = React.useState('')
-  const [toAsset, setToAsset] = React.useState<BraveWallet.BlockchainToken | undefined>(undefined)
-  const [filteredAssetList, setFilteredAssetList] = React.useState<BraveWallet.BlockchainToken[]>([])
-  const [swapToOrFrom, setSwapToOrFrom] = React.useState<ToOrFromType>('from')
   const [allowance, setAllowance] = React.useState<string | undefined>(undefined)
+  const [customSlippageTolerance, setCustomSlippageTolerance] = React.useState<string>('')
+  const [exchangeRate, setExchangeRate] = React.useState('')
+  const [filteredAssetList, setFilteredAssetList] = React.useState<BraveWallet.BlockchainToken[]>([])
+  const [fromAmount, setFromAmount] = React.useState('')
+  const [fromAsset, setFromAsset] = React.useState<BraveWallet.BlockchainToken | undefined>(fromAssetProp)
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [isSupported, setIsSupported] = React.useState<boolean>(false)
+  const [orderExpiration, setOrderExpiration] = React.useState<ExpirationPresetObjectType>(ExpirationPresetOptions[0])
+  const [orderType, setOrderType] = React.useState<OrderTypes>('market')
+  const [selectedPreset, setSelectedPreset] = React.useState<AmountPresetTypes | undefined>(undefined)
+  const [slippageTolerance, setSlippageTolerance] = React.useState<SlippagePresetObjectType>(SlippagePresetOptions[0])
+  const [swapError, setSwapError] = React.useState<SwapErrorResponse | undefined>(undefined)
+  const [swapQuote, setSwapQuote] = React.useState<BraveWallet.SwapResponse | undefined>(undefined)
+  const [swapToOrFrom, setSwapToOrFrom] = React.useState<ToOrFromType>('from')
+  const [toAmount, setToAmount] = React.useState('')
+  const [toAsset, setToAsset] = React.useState<BraveWallet.BlockchainToken | undefined>(toAssetProp)
 
   // custom hooks
   const isMounted = useIsMounted()
-  const getBalance = useBalance(selectedNetwork) // asets
+  const getBalance = useBalance(selectedNetwork)
 
   // Callbacks / methods
   const fetchSwapQuote = React.useCallback(async (payload: SwapParamsPayloadType) => {
@@ -110,6 +115,16 @@ export default function useSwap () {
 
     const quote = await (
       full ? swapService.getTransactionPayload(swapParams) : swapService.getPriceQuote(swapParams)
+    )
+
+    alert(full ? 'payload' : 'quote')
+    alert(JSON.stringify(quote))
+
+    console.log(
+      {
+        __type: full ? 'payload' : 'quote',
+        response: quote
+      }
     )
 
     if (quote.success && quote.response) {
@@ -348,7 +363,7 @@ export default function useSwap () {
 
     onSwapParamsChange(
       { toOrFrom: 'from', fromAsset: toAsset, toAsset: fromAsset },
-      { fromAmount: toAmount, toAmount: fromAmount }
+      { fromAmount, toAmount }
     )
   }, [toAsset, fromAsset, fromAmount, toAmount, onSwapParamsChange])
 
@@ -465,7 +480,7 @@ export default function useSwap () {
     )
   }
 
-  const onSwapInputChange = (value: string, name: string) => {
+  const onSwapInputChange = (value: string, name: 'to' | 'from' | 'rate') => {
     if (name === 'to') {
       onSetToAmount(value)
     }
@@ -498,9 +513,9 @@ export default function useSwap () {
     () => makeNetworkAsset(selectedNetwork),
     [selectedNetwork]
   )
-  const fromAssetBalance = React.useMemo(() => getBalance(selectedAccount, fromAsset), [selectedAccount, fromAsset])
-  const nativeAssetBalance = React.useMemo(() => getBalance(selectedAccount, nativeAsset), [selectedAccount, nativeAsset])
-  const toAssetBalance = React.useMemo(() => getBalance(selectedAccount, toAsset), [selectedAccount, toAsset])
+  const fromAssetBalance = getBalance(selectedAccount, fromAsset)
+  const nativeAssetBalance = getBalance(selectedAccount, nativeAsset)
+  const toAssetBalance = getBalance(selectedAccount, toAsset)
 
   const feesWrapped = React.useMemo(() => {
     if (!swapQuote) {
@@ -550,14 +565,14 @@ export default function useSwap () {
     const fromAmountWeiWrapped = new Amount(fromAmount)
       .multiplyByDecimals(fromAsset.decimals)
 
-    console.log(`
-      fromAsset: ${fromAsset.name}
-      fromAmountWeiWrapped: ${fromAmountWeiWrapped.format()}
-      fromAssetBalance: ${fromAssetBalance}
-      fromAmountWeiWrapped.gt(fromAssetBalance): ${fromAmountWeiWrapped.gt(fromAssetBalance)}
-    `)
     if (fromAmountWeiWrapped.gt(fromAssetBalance)) {
-      return 'insufficientBalance'
+      console.log(`
+        fromAsset: ${fromAsset.name}
+        fromAmountWeiWrapped: ${fromAmountWeiWrapped.format()}
+        fromAssetBalance: ${fromAssetBalance}
+        fromAmountWeiWrapped.gt(fromAssetBalance): ${fromAmountWeiWrapped.gt(fromAssetBalance)}
+      `)
+       return 'insufficientBalance'
     }
 
     if (feesWrapped.gt(nativeAssetBalance)) {
@@ -745,6 +760,7 @@ export default function useSwap () {
   React.useEffect(() => setIsLoading(false), [swapQuote, swapError])
 
   return {
+    allowance,
     clearPreset,
     customSlippageTolerance,
     exchangeRate,
@@ -773,6 +789,7 @@ export default function useSwap () {
     orderExpiration,
     orderType,
     selectedPreset,
+    setAllowance,
     setFromAmount,
     setFromAsset,
     setSelectedPreset,
@@ -782,14 +799,12 @@ export default function useSwap () {
     setToAmount,
     setToAsset,
     slippageTolerance,
+    swapAssetOptions,
+    swapQuote,
     swapToOrFrom,
     swapValidationError,
     toAmount,
     toAsset,
-    toAssetBalance,
-    setAllowance,
-    allowance,
-    swapAssetOptions,
-    swapQuote
+    toAssetBalance
   }
 }

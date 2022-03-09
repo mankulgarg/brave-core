@@ -3,49 +3,45 @@ import {
   UserAccountType,
   BuySendSwapViewTypes,
   ToOrFromType,
-  BraveWallet,
-  SwapValidationErrorType
+  BraveWallet
 } from '../../../constants/types'
 import {
   AccountsAssetsNetworks,
   Header,
   Swap
 } from '..'
+import { useSwap } from '../../../common/hooks'
 
 export interface Props {
-  assetOptions: BraveWallet.BlockchainToken[]
-  isFetchingQuote: boolean
-  validationError: SwapValidationErrorType | undefined
   onSelectNetwork: (network: BraveWallet.NetworkInfo) => void
   onSelectAccount: (account: UserAccountType) => void
-  onSelectSwapAsset: (asset: BraveWallet.BlockchainToken, toOrFrom: ToOrFromType) => void
   onAddNetwork: () => void
   onAddAsset: () => void
 }
 
 function SwapTab (props: Props) {
   const {
-    assetOptions,
-    isFetchingQuote,
-    validationError,
     onSelectNetwork,
     onSelectAccount,
-    onSelectSwapAsset,
     onAddNetwork,
     onAddAsset
   } = props
 
+  const swap = useSwap()
+  const {
+    onSelectTransactAsset,
+    swapAssetOptions
+  } = swap
+
   const [swapView, setSwapView] = React.useState<BuySendSwapViewTypes>('swap')
   const [isSelectingAsset, setIsSelectingAsset] = React.useState<ToOrFromType>('from')
-  const [filteredAssetList, setFilteredAssetList] = React.useState<BraveWallet.BlockchainToken[]>(assetOptions)
+  const [filteredAssetList, setFilteredAssetList] = React.useState<BraveWallet.BlockchainToken[]>(swapAssetOptions)
 
   const onChangeSwapView = (view: BuySendSwapViewTypes, option?: ToOrFromType) => {
     if (option) {
       setIsSelectingAsset(option)
-      setSwapView(view)
-    } else {
-      setSwapView(view)
     }
+    setSwapView(view)
   }
 
   const onClickSelectNetwork = (network: BraveWallet.NetworkInfo) => () => {
@@ -59,18 +55,18 @@ function SwapTab (props: Props) {
   }
 
   const onSelectAsset = (asset: BraveWallet.BlockchainToken) => () => {
-    onSelectSwapAsset(asset, isSelectingAsset)
+    onSelectTransactAsset(asset, isSelectingAsset)
     setSwapView('swap')
   }
 
-  const onFilterAssetList = (asset?: BraveWallet.BlockchainToken) => {
+  const onFilterAssetList = React.useCallback((asset?: BraveWallet.BlockchainToken) => {
     if (!asset) {
       return
     }
 
-    const newList = assetOptions.filter((assets) => assets !== asset)
+    const newList = swapAssetOptions.filter((assets) => assets !== asset)
     setFilteredAssetList(newList)
-  }
+  }, [swapAssetOptions])
 
   const goBack = () => {
     setSwapView('swap')
@@ -84,8 +80,7 @@ function SwapTab (props: Props) {
             onChangeSwapView={onChangeSwapView}
           />
           <Swap
-            isFetchingQuote={isFetchingQuote}
-            validationError={validationError}
+            {...swap}
             onChangeSwapView={onChangeSwapView}
             onFilterAssetList={onFilterAssetList}
           />

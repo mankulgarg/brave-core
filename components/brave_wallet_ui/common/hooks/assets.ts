@@ -11,6 +11,9 @@ import {
   WalletAccountType
 } from '../../constants/types'
 
+// Lib
+import { getBuyAssets } from '../async/lib'
+
 // Options
 import { makeNetworkAsset } from '../../options/asset-options'
 
@@ -19,13 +22,10 @@ import usePricing from './pricing'
 import useBalance from './balance'
 
 export default function useAssets (
-  accounts: WalletAccountType[],
   selectedAccount: WalletAccountType,
   selectedNetwork: BraveWallet.NetworkInfo,
-  fullTokenList: BraveWallet.BlockchainToken[],
   userVisibleTokensInfo: BraveWallet.BlockchainToken[],
-  spotPrices: BraveWallet.AssetPrice[],
-  getBuyAssets: () => Promise<BraveWallet.BlockchainToken[]>
+  spotPrices: BraveWallet.AssetPrice[]
 ) {
   const isMounted = React.useRef(true)
   React.useEffect(() => {
@@ -40,19 +40,6 @@ export default function useAssets (
     () => makeNetworkAsset(selectedNetwork),
     [selectedNetwork]
   )
-
-  const swapAssetOptions: BraveWallet.BlockchainToken[] = React.useMemo(() => {
-    return [
-      nativeAsset,
-      ...fullTokenList.filter((asset) => asset.symbol.toUpperCase() === 'BAT'),
-      ...userVisibleTokensInfo
-        .filter(asset => !['BAT', nativeAsset.symbol.toUpperCase()].includes(asset.symbol.toUpperCase())),
-      ...fullTokenList
-        .filter(asset => !['BAT', nativeAsset.symbol.toUpperCase()].includes(asset.symbol.toUpperCase()))
-        .filter(asset => !userVisibleTokensInfo
-          .some(token => token.symbol.toUpperCase() === asset.symbol.toUpperCase()))
-    ]
-  }, [fullTokenList, userVisibleTokensInfo, nativeAsset])
 
   const [buyAssetOptions, setBuyAssetOptions] = React.useState<BraveWallet.BlockchainToken[]>([nativeAsset])
 
@@ -88,7 +75,6 @@ export default function useAssets (
   }, [selectedAccount, userVisibleTokensInfo, getBalance, computeFiatAmount])
 
   return {
-    swapAssetOptions,
     sendAssetOptions: userVisibleTokensInfo,
     buyAssetOptions,
     panelUserAssetList

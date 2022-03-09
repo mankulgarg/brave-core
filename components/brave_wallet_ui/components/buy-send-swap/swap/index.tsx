@@ -6,7 +6,6 @@ import {
   BraveWallet,
   BuySendSwapViewTypes,
   ToOrFromType,
-  SwapValidationErrorType,
   AmountPresetTypes,
   WalletState
 } from '../../../constants/types'
@@ -31,28 +30,37 @@ import {
 import { LoaderIcon } from 'brave-ui/components/icons'
 import { ResetButton } from '../shared-styles'
 import { useSwap } from '../../../common/hooks'
-
 export interface Props {
-  isFetchingQuote: boolean
-  validationError: SwapValidationErrorType | undefined
+  isFetchingSwapQuote: boolean
   onChangeSwapView: (view: BuySendSwapViewTypes, option?: ToOrFromType) => void
   onFilterAssetList: (asset?: BraveWallet.BlockchainToken) => void
+  fromAsset?: BraveWallet.BlockchainToken
+  toAsset?: BraveWallet.BlockchainToken
+  customSlippageTolerance: ReturnType<typeof useSwap>['customSlippageTolerance']
+  exchangeRate: ReturnType<typeof useSwap>['exchangeRate']
+  flipSwapAssets: ReturnType<typeof useSwap>['flipSwapAssets']
+  fromAmount: ReturnType<typeof useSwap>['fromAmount']
+  fromAssetBalance: ReturnType<typeof useSwap>['fromAssetBalance']
+  isSwapButtonDisabled: ReturnType<typeof useSwap>['isSwapButtonDisabled']
+  onCustomSlippageToleranceChange: ReturnType<typeof useSwap>['onCustomSlippageToleranceChange']
+  onSelectExpiration: ReturnType<typeof useSwap>['onSelectExpiration']
+  onSelectPresetAmount: ReturnType<typeof useSwap>['onSelectPresetAmount']
+  onSelectSlippageTolerance: ReturnType<typeof useSwap>['onSelectSlippageTolerance']
+  onSubmitSwap: ReturnType<typeof useSwap>['onSubmitSwap']
+  onSwapInputChange: ReturnType<typeof useSwap>['onSwapInputChange']
+  onSwapQuoteRefresh: ReturnType<typeof useSwap>['onSwapQuoteRefresh']
+  onToggleOrderType: ReturnType<typeof useSwap>['onToggleOrderType']
+  orderExpiration: ReturnType<typeof useSwap>['orderExpiration']
+  orderType: ReturnType<typeof useSwap>['orderType']
+  selectedPreset: ReturnType<typeof useSwap>['selectedPreset']
+  setSelectedPreset: ReturnType<typeof useSwap>['setSelectedPreset']
+  slippageTolerance: ReturnType<typeof useSwap>['slippageTolerance']
+  swapValidationError: ReturnType<typeof useSwap>['swapValidationError']
+  toAmount: ReturnType<typeof useSwap>['toAmount']
+  toAssetBalance: ReturnType<typeof useSwap>['toAssetBalance']
 }
 
 function Swap (props: Props) {
-  const {
-    isFetchingQuote,
-    validationError,
-    onChangeSwapView,
-    onFilterAssetList
-  } = props
-
-  // redux
-  const {
-    selectedNetwork
-  } = useSelector((state: { wallet: WalletState }) => state.wallet)
-
-  // internal hooks
   const {
     customSlippageTolerance,
     exchangeRate,
@@ -60,24 +68,33 @@ function Swap (props: Props) {
     fromAmount,
     fromAsset,
     fromAssetBalance,
+    isFetchingSwapQuote,
+    isSwapButtonDisabled,
+    onChangeSwapView,
     onCustomSlippageToleranceChange,
+    onFilterAssetList,
     onSelectExpiration,
-    onSelectSlippageTolerance,
     onSelectPresetAmount,
+    onSelectSlippageTolerance,
     onSubmitSwap,
     onSwapInputChange: onInputChange,
     onSwapQuoteRefresh,
     onToggleOrderType,
     orderExpiration,
     orderType,
+    selectedPreset,
+    setSelectedPreset,
     slippageTolerance,
+    swapValidationError: validationError,
     toAmount,
     toAsset,
-    toAssetBalance,
-    setSelectedPreset,
-    selectedPreset,
-    isSwapButtonDisabled
-  } = useSwap()
+    toAssetBalance
+  } = props
+
+  // redux
+  const {
+    selectedNetwork
+  } = useSelector((state: { wallet: WalletState }) => state.wallet)
 
   const onShowAssetTo = () => {
     onChangeSwapView('assets', 'to')
@@ -137,7 +154,7 @@ function Swap (props: Props) {
     onSelectPresetAmount(percent)
   }
 
-  const handleOnInputChange = (value: string, name: string) => {
+  const handleOnInputChange = (value: string, name: 'to' | 'from' | 'rate') => {
     if (name === 'from' && selectedPreset) {
       // Clear preset
       setSelectedPreset(undefined)
@@ -202,7 +219,7 @@ function Swap (props: Props) {
         onClick={onSubmitSwap}
       >
         {
-          isFetchingQuote
+          isFetchingSwapQuote
             ? <SwapButtonLoader><LoaderIcon /></SwapButtonLoader>
             : <SwapButtonText>{submitText}</SwapButtonText>
         }

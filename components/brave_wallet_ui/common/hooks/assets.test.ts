@@ -1,3 +1,6 @@
+import { TextEncoder, TextDecoder } from 'util'
+global.TextDecoder = TextDecoder
+global.TextEncoder = TextEncoder
 import { renderHook, act } from '@testing-library/react-hooks'
 import {
   mockAccount,
@@ -7,6 +10,9 @@ import {
 import { AccountAssetOptions } from '../../options/asset-options'
 import useAssets from './assets'
 import { WalletAccountType } from '../../constants/types'
+import { setMockedBuyAssets } from '../async/__mocks__/lib'
+
+jest.mock('../async/lib')
 
 const mockAccounts = [
   {
@@ -31,13 +37,15 @@ const mockVisibleList = [
   AccountAssetOptions[1]
 ]
 
-const getBuyAssets = async () => {
-  return await mockVisibleList
-}
-
 describe('useAssets hook', () => {
   it('Selected account has balances, should return expectedResult', async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useAssets(mockAccounts, mockAccounts[0], mockNetwork, mockVisibleList, mockVisibleList, mockAssetPrices, getBuyAssets))
+    setMockedBuyAssets(mockVisibleList)
+    const { result, waitForNextUpdate } = renderHook(() => useAssets(
+      mockAccounts[0],
+      mockNetwork,
+      mockVisibleList,
+      mockAssetPrices
+    ))
     await act(async () => {
       await waitForNextUpdate()
     })
@@ -45,7 +53,12 @@ describe('useAssets hook', () => {
   })
 
   it('should return empty array for panelUserAssetList if visible assets is empty', async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useAssets(mockAccounts, mockAccount, mockNetwork, mockVisibleList, [], mockAssetPrices, getBuyAssets))
+    const { result, waitForNextUpdate } = renderHook(() => useAssets(
+      mockAccount,
+      mockNetwork,
+      [],
+      mockAssetPrices
+    ))
     await act(async () => {
       await waitForNextUpdate()
     })

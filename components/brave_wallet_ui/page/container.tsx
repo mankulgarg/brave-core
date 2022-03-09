@@ -44,7 +44,6 @@ import {
   findUnstoppableDomainAddress,
   getBalance,
   getBlockchainTokenInfo,
-  getBuyAssets,
   getChecksumEthAddress,
   isStrongPassword,
   onConnectHardwareWallet
@@ -57,7 +56,6 @@ import {
   usePreset,
   usePricing,
   useSend,
-  useSwap,
   useTokenInfo,
   useAssetManagement
 } from '../common/hooks'
@@ -126,34 +124,19 @@ function Container (props: Props) {
   const [sessionRoute, setSessionRoute] = React.useState<string | undefined>(undefined)
 
   const {
-    swapAssetOptions,
     sendAssetOptions,
     buyAssetOptions
   } = useAssets(
-    accounts,
     selectedAccount,
     selectedNetwork,
-    fullTokenList,
     userVisibleTokensInfo,
-    transactionSpotPrices,
-    getBuyAssets
+    transactionSpotPrices
   )
 
   const {
     onFindTokenInfoByContractAddress,
     foundTokenInfoByContractAddress
   } = useTokenInfo(getBlockchainTokenInfo, userVisibleTokensInfo, fullTokenList, selectedNetwork)
-
-  const {
-    fromAsset,
-    isFetchingSwapQuote,
-    isSwapButtonDisabled,
-    swapValidationError,
-    isSwapSupported,
-    onSwapQuoteRefresh,
-    onSetFromAmount,
-    onSelectTransactAsset
-  } = useSwap()
 
   const {
     onSetSendAmount,
@@ -198,8 +181,8 @@ function Container (props: Props) {
 
   const onSelectPresetAmount = usePreset(
     {
-      onSetAmount: onSetFromAmount,
-      asset: fromAsset
+      onSetAmount: onSetSendAmount,
+      asset: selectedSendAsset
     }
   )
 
@@ -669,7 +652,6 @@ function Container (props: Props) {
             sendAmount={sendAmount}
             addressError={addressError}
             addressWarning={addressWarning}
-            swapValidationError={swapValidationError}
             sendAmountValidationError={sendAmountValidationError}
             toAddressOrUrl={toAddressOrUrl}
             toAddress={toAddress}
@@ -677,10 +659,6 @@ function Container (props: Props) {
             selectedSendAsset={selectedSendAsset}
             sendAssetBalance={sendAssetBalance}
             sendAssetOptions={sendAssetOptions}
-            swapAssetOptions={swapAssetOptions}
-            isFetchingSwapQuote={isFetchingSwapQuote}
-            isSwapSubmitDisabled={isSwapButtonDisabled}
-            isSwapSupported={isSwapSupported}
             defaultCurrencies={defaultCurrencies}
             onSetBuyAmount={onSetBuyAmount}
             onSetToAddressOrUrl={onSetToAddressOrUrl}
@@ -690,9 +668,7 @@ function Container (props: Props) {
             onSubmitBuy={onSubmitBuy}
             onSelectNetwork={onSelectNetwork}
             onSelectAccount={onSelectAccount}
-            onSelectAsset={onSelectTransactAsset}
             onSelectTab={setSelectedWidgetTab}
-            onSwapQuoteRefresh={onSwapQuoteRefresh}
             onSelectSendAsset={onSelectSendAsset}
             onAddNetwork={onAddNetwork}
             onAddAsset={onShowVisibleAssetsModal}

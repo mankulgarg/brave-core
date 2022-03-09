@@ -1,19 +1,29 @@
 import { AccountAssetOptions } from '../../../options/asset-options'
 import { BraveWallet } from '../../../constants/types'
 
+let mockedAllowance = '1000000000000000000' // 1 unit
+
 export const getERC20Allowance = () => new Promise<string>((resolve) => {
-    resolve('1000000000000000000') // 1 unit
+    resolve(mockedAllowance)
 })
+
+export const setERC20Allowance = (newAllowance: string) => {
+    mockedAllowance = newAllowance
+}
 
 export const getIsSwapSupported = (network: BraveWallet.NetworkInfo) => new Promise<boolean>((resolve) => {
     resolve(true)
 })
 
-const mockVisibleList = [
+let mockBuyAssetList = [
     AccountAssetOptions[0],
     AccountAssetOptions[1]
 ]
 
-export const getBuyAssets = () => new Promise<typeof mockVisibleList>((resolve) => {
-    resolve(mockVisibleList)
+export const getBuyAssets = () => new Promise<typeof AccountAssetOptions>((resolve) => {
+    resolve(mockBuyAssetList)
 })
+
+export const setMockedBuyAssets = (newList: typeof AccountAssetOptions) => {
+    mockBuyAssetList = newList
+}

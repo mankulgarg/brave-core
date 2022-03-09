@@ -5,7 +5,6 @@ import {
   ToOrFromType,
   BraveWallet,
   BuySupportedChains,
-  SwapValidationErrorType,
   DefaultCurrencies,
   AmountValidationErrorType
 } from '../../constants/types'
@@ -15,6 +14,7 @@ import Buy from '../../components/buy-send-swap/tabs/buy-tab'
 import {
   Layout
 } from '../../components/buy-send-swap'
+import { useSwap } from '../../common/hooks'
 
 export interface Props {
   networkList: BraveWallet.NetworkInfo[]
@@ -22,7 +22,6 @@ export interface Props {
   sendAssetBalance: string
   selectedNetwork: BraveWallet.NetworkInfo
   selectedTab: BuySendSwapTypes
-  swapValidationError: SwapValidationErrorType | undefined
   sendAmountValidationError: AmountValidationErrorType | undefined
   buyAmount: string
   sendAmount: string
@@ -32,22 +31,16 @@ export interface Props {
   addressWarning: string
   buyAssetOptions: BraveWallet.BlockchainToken[]
   sendAssetOptions: BraveWallet.BlockchainToken[]
-  swapAssetOptions: BraveWallet.BlockchainToken[]
-  isFetchingSwapQuote: boolean
-  isSwapSubmitDisabled: boolean
-  isSwapSupported: boolean
   defaultCurrencies: DefaultCurrencies
   onSubmitBuy: (asset: BraveWallet.BlockchainToken) => void
   onSubmitSend: () => void
   onSelectNetwork: (network: BraveWallet.NetworkInfo) => void
   onSelectAccount: (account: UserAccountType) => void
-  onSelectAsset: (asset: BraveWallet.BlockchainToken, toOrFrom: ToOrFromType) => void
   onSetBuyAmount: (value: string) => void
   onSetSendAmount: (value: string) => void
   onSetToAddressOrUrl: (value: string) => void
   onSelectPresetSendAmount: (percent: number) => void
   onSelectTab: (tab: BuySendSwapTypes) => void
-  onSwapQuoteRefresh: () => void
   onSelectSendAsset: (asset: BraveWallet.BlockchainToken, toOrFrom: ToOrFromType) => void
   onAddNetwork: () => void
   onAddAsset: (value: boolean) => void
@@ -68,17 +61,12 @@ function BuySendSwap (props: Props) {
     toAddressOrUrl,
     buyAssetOptions,
     sendAssetOptions,
-    swapAssetOptions,
-    swapValidationError,
     sendAmountValidationError,
-    isFetchingSwapQuote,
-    isSwapSupported,
     defaultCurrencies,
     onSubmitBuy,
     onSubmitSend,
     onSelectNetwork,
     onSelectAccount,
-    onSelectAsset,
     onSetBuyAmount,
     onSetSendAmount,
     onSetToAddressOrUrl,
@@ -88,6 +76,8 @@ function BuySendSwap (props: Props) {
     onAddNetwork,
     onAddAsset
   } = props
+
+  const { isSwapSupported } = useSwap({})
 
   // Switched this to useLayoutEffect to fix bad setState call error
   // that was accouring when you would switch to a network that doesn't
@@ -123,12 +113,8 @@ function BuySendSwap (props: Props) {
     >
       {selectedTab === 'swap' &&
         <Swap
-          isFetchingQuote={isFetchingSwapQuote}
-          validationError={swapValidationError}
           onSelectNetwork={onSelectNetwork}
           onSelectAccount={onSelectAccount}
-          onSelectSwapAsset={onSelectAsset}
-          assetOptions={swapAssetOptions}
           onAddNetwork={onAddNetwork}
           onAddAsset={onClickAddAsset}
         />
