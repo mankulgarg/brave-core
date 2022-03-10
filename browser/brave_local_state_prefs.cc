@@ -89,7 +89,7 @@ void RegisterLocalStatePrefs(PrefRegistrySimple* registry) {
 
 #endif  // BUILDFLAG(BRAVE_P3A_ENABLED)
 
-  brave_shields::RegisterShieldsP3APrefs(registry);
+  brave_shields::RegisterShieldsP3ALocalPrefs(registry);
 #if !defined(OS_ANDROID)
   BraveNewTabMessageHandler::RegisterLocalStatePrefs(registry);
   BraveWindowTracker::RegisterPrefs(registry);

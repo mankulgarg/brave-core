@@ -15,6 +15,7 @@
 
 class PrefChangeRegistrar;
 class PrefService;
+class HostContentSettingsMap;
 
 namespace brave_shields {
 
@@ -23,7 +24,9 @@ class AdBlockService;
 class AdBlockPrefService : public KeyedService {
  public:
   explicit AdBlockPrefService(AdBlockService* ad_block_service,
-                              PrefService* prefs);
+                              PrefService* prefs,
+                              HostContentSettingsMap* host_content_settings_map,
+                              bool is_regular_profile);
   ~AdBlockPrefService() override;
 
  private:

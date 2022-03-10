@@ -10,8 +10,10 @@
 #include "brave/components/brave_shields/browser/ad_block_regional_service_manager.h"
 #include "brave/components/brave_shields/browser/ad_block_service.h"
 #include "brave/components/brave_shields/browser/ad_block_subscription_service_manager.h"
+#include "brave/components/brave_shields/browser/brave_shields_p3a.h"
 #include "brave/components/brave_shields/common/brave_shield_constants.h"
 #include "brave/components/brave_shields/common/pref_names.h"
+#include "components/content_settings/core/browser/host_content_settings_map.h"
 #include "components/prefs/pref_change_registrar.h"
 #include "components/prefs/pref_service.h"
 
@@ -34,8 +36,11 @@ std::string GetTagFromPrefName(const std::string& pref_name) {
 
 }  // namespace
 
-AdBlockPrefService::AdBlockPrefService(AdBlockService* ad_block_service,
-                                       PrefService* prefs)
+AdBlockPrefService::AdBlockPrefService(
+    AdBlockService* ad_block_service,
+    PrefService* prefs,
+    HostContentSettingsMap* host_content_settings_map,
+    bool is_regular_profile)
     : ad_block_service_(ad_block_service), prefs_(prefs) {
   pref_change_registrar_.reset(new PrefChangeRegistrar());
   pref_change_registrar_->Init(prefs_);
@@ -56,6 +61,10 @@ AdBlockPrefService::AdBlockPrefService(AdBlockService* ad_block_service,
   OnPreferenceChanged(prefs::kFBEmbedControlType);
   OnPreferenceChanged(prefs::kTwitterEmbedControlType);
   OnPreferenceChanged(prefs::kLinkedInEmbedControlType);
+
+  if (is_regular_profile) {
+    MaybeRecordInitialShieldsSettings(prefs, host_content_settings_map);
+  }
 }
 
 AdBlockPrefService::~AdBlockPrefService() = default;
