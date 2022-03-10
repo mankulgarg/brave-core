@@ -103,27 +103,32 @@ export default function useManageDirectFeeds (publishers?: Publishers) {
 
   const setFeedSearchResultsItemStatus = (sourceUrl: string, status: FeedInputValidity) => {
     setFeedSearchResults(existing => {
-      const item = existing.find(item => item.feedUrl.url === sourceUrl)
-      const others = existing.filter(other => other !== item)
-      return [
-        ...others,
-        {
-          ...item,
-          status
-        }
-      ] as FeedSearchResultModel[]
+      // Amend by index to preserve order
+      const itemIdx = existing.findIndex(item => item.feedUrl.url === sourceUrl)
+      const newResults = [...existing]
+      newResults[itemIdx] = {
+        ...newResults[itemIdx],
+        status
+      }
+      return newResults
     })
   }
 
   const removeSearchResultItem = (sourceUrl: string) => {
-    setFeedSearchResults(existing => {
-      const item = existing.find(item => item.feedUrl.url === sourceUrl)
-      const others = existing.filter(other => other !== item)
-      return others
-    })
+    const item = feedSearchResults.find(item => item.feedUrl.url === sourceUrl)
+    if (item) {
+      if (feedSearchResults.length > 1) {
+        const others = feedSearchResults.filter(other => other !== item)
+        setFeedSearchResults(others)
+      } else {
+        // Remove all results
+        setFeedSearchResults([])
+        setFeedInputIsValid(FeedInputValidity.Valid)
+      }
+    }
   }
 
-  const onAddSource = React.useCallback(async (sourceUrl: string) => {
+  const onAddSource = async (sourceUrl: string) => {
     // Ask the backend
     setFeedSearchResultsItemStatus(sourceUrl, FeedInputValidity.Pending)
     const api = getBraveNewsAPI()
@@ -141,7 +146,7 @@ export default function useManageDirectFeeds (publishers?: Publishers) {
     }
     // Update state with new publisher list
     dispatch(todayActions.dataReceived({ publishers: result.publishers }))
-  }, [feedInputText, setFeedInputIsValid, dispatch])
+  }
 
   return {
     userFeeds,
