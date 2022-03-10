@@ -114,7 +114,6 @@ static_library("browser") {
   deps = [
     ":constants",
     ":hd_keyring",
-    ":solana_utils",
     ":transaction",
     "//base",
     "//brave/components/api_request_helper",
@@ -126,6 +125,7 @@ static_library("browser") {
     "//brave/components/brave_wallet/common",
     "//brave/components/brave_wallet/common:common_constants",
     "//brave/components/brave_wallet/common:mojom",
+    "//brave/components/brave_wallet/common:solana_utils",
     "//brave/components/resources:strings_grit",
     "//brave/components/weekly_storage:weekly_storage",
     "//brave/vendor/bip39wally-core-native:bip39wally-core",
@@ -173,18 +173,6 @@ source_set("constants") {
     "//brave/components/brave_wallet/common:mojom",
     "//brave/components/resources:strings_grit",
     "//ui/base:base",
-  ]
-}
-
-source_set("solana_utils") {
-  sources = [
-    "solana_utils.cc",
-    "solana_utils.h",
-  ]
-
-  deps = [
-    "//base",
-    "//brave/third_party/bitcoin-core",  # for base58
   ]
 }
 

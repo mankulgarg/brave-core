@@ -8,7 +8,7 @@
 #include <limits>
 
 #include "base/check.h"
-#include "brave/components/brave_wallet/browser/solana_utils.h"
+#include "brave/components/brave_wallet/common/solana_utils.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
 
 namespace brave_wallet {

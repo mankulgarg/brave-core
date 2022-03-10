@@ -48,6 +48,18 @@ source_set("common_constants") {
   deps = [ ":mojom" ]
 }
 
+source_set("solana_utils") {
+  sources = [
+    "solana_utils.cc",
+    "solana_utils.h",
+  ]
+
+  deps = [
+    "//base",
+    "//brave/third_party/bitcoin-core",  # for base58
+  ]
+}
+
 preprocess_if_expr("preprocess_mojo") {
   deps = [ "//brave/components/brave_wallet/common:mojom_js" ]
   in_folder = "$target_gen_dir"
