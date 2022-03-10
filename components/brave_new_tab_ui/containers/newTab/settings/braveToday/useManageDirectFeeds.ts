@@ -97,7 +97,7 @@ export default function useManageDirectFeeds (publishers?: Publishers) {
       dispatch(todayActions.dataReceived({ publishers: result.publishers }))
       return
     }
-    setFeedSearchResults(results)
+    setFeedSearchResults(results.map(r => ({ ...r, status: FeedInputValidity.Valid })))
     setFeedInputIsValid(FeedInputValidity.HasResults)
   }, [feedInputText, setFeedSearchResults])
 
@@ -115,18 +115,31 @@ export default function useManageDirectFeeds (publishers?: Publishers) {
     })
   }
 
+  const removeSearchResultItem = (sourceUrl: string) => {
+    setFeedSearchResults(existing => {
+      const item = existing.find(item => item.feedUrl.url === sourceUrl)
+      const others = existing.filter(other => other !== item)
+      return others
+    })
+  }
+
   const onAddSource = React.useCallback(async (sourceUrl: string) => {
     // Ask the backend
-    setFeedInputIsValid(FeedInputValidity.Pending)
-    const api = getBraveNewsAPI()
     setFeedSearchResultsItemStatus(sourceUrl, FeedInputValidity.Pending)
+    const api = getBraveNewsAPI()
     const result = await api.subscribeToNewDirectFeed({ url: sourceUrl })
     const status = !result.isValidFeed
       ? FeedInputValidity.NotValid
       : result.isDuplicate
         ? FeedInputValidity.IsDuplicate
         : FeedInputValidity.Valid
-    setFeedSearchResultsItemStatus(sourceUrl, status)
+    // Remove item if successful, as user shouldn't try to add more than once
+    if (status === FeedInputValidity.Valid) {
+      removeSearchResultItem(sourceUrl)
+    } else {
+      setFeedSearchResultsItemStatus(sourceUrl, status)
+    }
+    // Update state with new publisher list
     dispatch(todayActions.dataReceived({ publishers: result.publishers }))
   }, [feedInputText, setFeedInputIsValid, dispatch])
 

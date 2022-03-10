@@ -79,10 +79,28 @@ export const FeedInput = styled('input')`
 `
 
 export const FeedSearchResults = styled('div')`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   font-size: 16px;
 `
 
-export const ResultItem = styled('div')`
+export const ResultItems = styled('ul')`
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+`
+
+export const ResultItem = styled('li')`
+  list-style: none;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -102,6 +120,7 @@ export const YourSources = styled('div')`
   flex-direction: column;
   gap: 8px;
   align-items: stretch;
+  font-family: ${p => p.theme.fontFamily.heading};
 `
 
 export const YourSourcesAction = styled('div')`

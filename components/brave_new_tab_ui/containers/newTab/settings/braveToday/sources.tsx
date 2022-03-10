@@ -4,7 +4,7 @@
 // you can obtain one at http://mozilla.org/MPL/2.0/.
 
 import * as React from 'react'
-import { CaratRightIcon, LoaderIcon, PlusIcon } from 'brave-ui/components/icons'
+import { CaratRightIcon, PlusIcon } from 'brave-ui/components/icons'
 import { getLocale } from '../../../../../common/locale'
 import { Publisher } from '../../../../api/brave_news'
 import {
@@ -12,7 +12,7 @@ import {
   SettingsText,
   SettingsSectionTitle
 } from '../../../../components/default'
-import Button from '$web-components/button'
+import Button, { ButtonIconContainer } from '$web-components/button'
 import NavigateBack from '../../../../components/default/settings/navigateBack'
 import DirectFeedItemMenu from './directFeedMenu'
 import { Props } from './'
@@ -156,23 +156,7 @@ export default function Sources (props: SourcesProps) {
           {(feedInputIsValid === FeedInputValidity.IsDuplicate) &&
             <Styled.FeedUrlError>Seems like you already subscribe to that feed.</Styled.FeedUrlError>
           }
-          {(feedInputIsValid === FeedInputValidity.HasResults) &&
-            <Styled.FeedSearchResults>
-              Multiple feeds were found:
-              {feedSearchResults.map(result => (
-                <Styled.ResultItem>
-                  <span title={result.feedUrl.url}>{result.feedTitle}</span>
-                  <Button
-                    isDisabled={result.status !== FeedInputValidity.Valid}
-                    onClick={onAddSource.bind(undefined, result.feedUrl.url)}
-                  >
-                    {(result.status === FeedInputValidity.Pending) ? <LoaderIcon /> : <PlusIcon />}
-                  </Button>
-                </Styled.ResultItem>
-              ))}
-            </Styled.FeedSearchResults>
-          }
- <Styled.YourSourcesAction>
+          <Styled.YourSourcesAction>
             <Button
               isPrimary
               scale='small'
@@ -183,6 +167,29 @@ export default function Sources (props: SourcesProps) {
               Add source
             </Button>
           </Styled.YourSourcesAction>
+          {(feedInputIsValid === FeedInputValidity.HasResults) &&
+            <Styled.FeedSearchResults>
+              Multiple feeds were found:
+              <Styled.ResultItems>
+              {feedSearchResults.map(result => (
+                <Styled.ResultItem key={result.feedUrl.url}>
+                  <span title={result.feedUrl.url}>{result.feedTitle}</span>
+                  <Button
+                    ariaLabel={`Add the feed at ${result.feedUrl.url}`}
+                    scale={'tiny'}
+                    isDisabled={result.status !== FeedInputValidity.Valid}
+                    isLoading={result.status === FeedInputValidity.Pending}
+                    onClick={onAddSource.bind(undefined, result.feedUrl.url)}
+                  >
+                    <ButtonIconContainer>
+                      <PlusIcon />
+                    </ButtonIconContainer>
+                  </Button>
+                </Styled.ResultItem>
+              ))}
+              </Styled.ResultItems>
+            </Styled.FeedSearchResults>
+          }
         </Styled.YourSources>
         <CategoryList
           categories={[...publishersByCategory.keys()]}
