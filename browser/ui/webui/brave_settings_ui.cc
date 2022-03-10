@@ -96,7 +96,7 @@ void BraveSettingsUI::AddResources(content::WebUIDataSource* html_source,
       base::FeatureList::IsEnabled(
           brave_wallet::features::kNativeBraveWalletFeature));
   html_source->AddBoolean(
-      "isDeAmpingEnabled",
+      "isDeAmpFeatureEnabled",
       base::FeatureList::IsEnabled(de_amp::features::kBraveDeAMP));
 #if defined(OS_WIN)
   html_source->AddBoolean(
