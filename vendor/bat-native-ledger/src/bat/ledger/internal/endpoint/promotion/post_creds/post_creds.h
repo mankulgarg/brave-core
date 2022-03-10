@@ -53,15 +53,14 @@ class PostCreds {
   explicit PostCreds(LedgerImpl* ledger);
   ~PostCreds();
 
-  void Request(
-    const std::string& promotion_id,
-    std::unique_ptr<base::ListValue> blinded_creds,
-    PostCredsCallback callback);
+  void Request(const std::string& promotion_id,
+               base::Value::List&& blinded_creds,
+               PostCredsCallback callback);
 
  private:
   std::string GetUrl(const std::string& promotion_id);
 
-  std::string GeneratePayload(std::unique_ptr<base::ListValue> blinded_creds);
+  std::string GeneratePayload(base::Value::List&& blinded_creds);
 
   type::Result CheckStatusCode(const int status_code);
 
