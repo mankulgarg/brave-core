@@ -60,7 +60,7 @@ class DirectFeedController {
   void DownloadAllContent(std::vector<mojom::PublisherPtr> publishers,
                           GetFeedItemsCallback callback);
   void FindFeeds(const GURL& possible_feed_or_site_url,
-      mojom::BraveNewsController::FindFeedsCallback callback);
+                 mojom::BraveNewsController::FindFeedsCallback callback);
 
  private:
   using SimpleURLLoaderList =

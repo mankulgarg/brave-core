@@ -5,7 +5,7 @@
 
 #include "brave/components/brave_today/browser/html_parsing.h"
 
-#include <regex>
+#include <regex>  // NOLINT replace with re2
 #include <string>
 #include <vector>
 
@@ -24,16 +24,16 @@ constexpr auto kSupportedFeedTypes = base::MakeFixedFlatSet<base::StringPiece>(
     {"application/rss+xml", "application/atom+xml", "application/xml",
      "application/rss+atom", "application/json"});
 
-constexpr auto kSupportedRels = base::MakeFixedFlatSet<base::StringPiece>(
-    {"alternate", "service.feed"});
+constexpr auto kSupportedRels =
+    base::MakeFixedFlatSet<base::StringPiece>({"alternate", "service.feed"});
 
 }  // namespace
 
-std::vector<GURL> GetFeedURLsFromHTMLDocument(
-    const std::string &html_body, const GURL& html_url) {
+std::vector<GURL> GetFeedURLsFromHTMLDocument(const std::string& html_body,
+                                              const GURL& html_url) {
   VLOG(1) << "GetFeedURLsFromHTMLDocument";
-  std::regex link_regex("(<\\s*link [^>]+>)",
-      std::regex_constants::ECMAScript | std::regex_constants::icase);
+  std::regex link_regex("(<\\s*link [^>]+>)", std::regex_constants::ECMAScript |
+                                                  std::regex_constants::icase);
   auto links_begin =
       std::sregex_iterator(html_body.begin(), html_body.end(), link_regex);
   auto links_end = std::sregex_iterator();
@@ -41,10 +41,12 @@ std::vector<GURL> GetFeedURLsFromHTMLDocument(
   for (auto i = links_begin; i != links_end; i++) {
     std::string link_text = i->str();
     VLOG(1) << "Found link: " << link_text;
-    std::regex rel_extract("rel=\"([^\"]*)\"",
+    std::regex rel_extract(
+        "rel=\"([^\"]*)\"",
         std::regex_constants::ECMAScript | std::regex_constants::icase);
     std::smatch rel_matches;
-    if (!std::regex_search(link_text, rel_matches, rel_extract) || rel_matches.size() != 2u) {
+    if (!std::regex_search(link_text, rel_matches, rel_extract) ||
+        rel_matches.size() != 2u) {
       VLOG(1) << "no valid matching rel: " << rel_matches.size();
       continue;
     }
@@ -53,10 +55,12 @@ std::vector<GURL> GetFeedURLsFromHTMLDocument(
       VLOG(1) << "not valid rel: " << rel;
       continue;
     }
-    std::regex type_extract("type=\"([^\"]+)\"",
+    std::regex type_extract(
+        "type=\"([^\"]+)\"",
         std::regex_constants::ECMAScript | std::regex_constants::icase);
     std::smatch type_matches;
-    if (!std::regex_search(link_text, type_matches, type_extract) || type_matches.size() != 2u) {
+    if (!std::regex_search(link_text, type_matches, type_extract) ||
+        type_matches.size() != 2u) {
       VLOG(1) << "no valid matching type: " << type_matches.size();
       continue;
     }
@@ -66,12 +70,14 @@ std::vector<GURL> GetFeedURLsFromHTMLDocument(
       VLOG(1) << "not valid type: " << content_type;
       continue;
     }
-    std::regex href_extract("href=\"([^\"]+)\"",
+    std::regex href_extract(
+        "href=\"([^\"]+)\"",
         std::regex_constants::ECMAScript | std::regex_constants::icase);
     std::smatch href_matches;
-    if (!std::regex_search(link_text, href_matches, href_extract) || href_matches.size() != 2u) {
-       VLOG(1) << "no valid matching href: " << href_matches.size();
-       continue;
+    if (!std::regex_search(link_text, href_matches, href_extract) ||
+        href_matches.size() != 2u) {
+      VLOG(1) << "no valid matching href: " << href_matches.size();
+      continue;
     }
     auto href = href_matches[1].str();
     if (href.empty() || !base::IsStringASCII(href)) {
