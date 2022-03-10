@@ -38,19 +38,9 @@ import { getERC20Allowance, getIsSwapSupported } from '../async/lib'
 // Hooks
 import useBalance from './balance'
 import usePreset from './select-preset'
+import { useIsMounted } from './useIsMounted'
 
 const SWAP_VALIDATION_ERROR_CODE = 100
-
-function useIsMounted () {
-  const isMounted = React.useRef(true)
-  React.useEffect(() => {
-    return () => {
-      isMounted.current = false
-    }
-  }, [])
-  return isMounted
-}
-
 interface Args {
   fromAsset?: BraveWallet.BlockchainToken
   toAsset?: BraveWallet.BlockchainToken

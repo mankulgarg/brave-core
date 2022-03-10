@@ -20,6 +20,7 @@ import { makeNetworkAsset } from '../../options/asset-options'
 // Hooks
 import usePricing from './pricing'
 import useBalance from './balance'
+import { useIsMounted } from './useIsMounted'
 
 export default function useAssets (
   selectedAccount: WalletAccountType,
@@ -27,12 +28,7 @@ export default function useAssets (
   userVisibleTokensInfo: BraveWallet.BlockchainToken[],
   spotPrices: BraveWallet.AssetPrice[]
 ) {
-  const isMounted = React.useRef(true)
-  React.useEffect(() => {
-      return () => {
-        isMounted.current = false
-      }
-  }, [])
+  const isMounted = useIsMounted()
 
   const { computeFiatAmount } = usePricing(spotPrices)
   const getBalance = useBalance(selectedNetwork)
