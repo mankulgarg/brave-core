@@ -253,4 +253,11 @@ def braveify(string_value):
             .replace('Brave Safe', 'Google Safe')
             .replace('Sends URLs of some pages you visit to Brave',
                      'Sends URLs of some pages you visit to Google')
-            .replace('Brave Account', 'Brave sync chain'))
+            .replace('Brave Account', 'Brave sync chain')
+            .replace('Brave Lens', 'Google Lens')
+            .replace('Bravebook', 'Chromebook')
+            .replace('Bravecast', 'Chromecast')
+            .replace('Brave Cloud', 'Google Cloud')
+            .replace('Brave Pay', 'Google Pay')
+            .replace('Brave Photos', 'Google Photos')
+            .replace('Brave Projects', 'Chromium Projects'))
