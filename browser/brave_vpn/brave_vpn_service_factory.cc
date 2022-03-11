@@ -9,6 +9,7 @@
 #include "brave/browser/skus/skus_service_factory.h"
 #include "brave/components/brave_vpn/brave_vpn_service.h"
 #include "brave/components/skus/common/features.h"
+#include "build/build_config.h"
 #include "chrome/browser/profiles/incognito_helpers.h"
 #include "chrome/browser/profiles/profile.h"
 #include "components/keyed_service/content/browser_context_dependency_manager.h"
@@ -16,7 +17,7 @@
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/storage_partition.h"
 
-#if defined(OS_WIN) || defined(OS_MAC)
+#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
 #include "brave/components/brave_vpn/brave_vpn_utils.h"
 #endif
 
@@ -45,7 +46,7 @@ KeyedService* BraveVpnServiceFactory::BuildServiceInstanceFor(
   // TODO(simonhong): Can we use this check for android?
   // For now, vpn is disabled by default on desktop but not sure on
   // android.
-#if defined(OS_WIN) || defined(OS_MAC)
+#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
   if (!brave_vpn::IsBraveVPNEnabled())
     return nullptr;
 #endif
@@ -59,10 +60,10 @@ KeyedService* BraveVpnServiceFactory::BuildServiceInstanceFor(
         return skus::SkusServiceFactory::GetForContext(context);
       },
       context);
-#if defined(OS_WIN) || defined(OS_MAC)
+#if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
   return new BraveVpnService(shared_url_loader_factory,
                              user_prefs::UserPrefs::Get(context), callback);
-#elif defined(OS_ANDROID)
+#elif BUILDFLAG(IS_ANDROID)
   return new BraveVpnService(shared_url_loader_factory, callback);
 #endif
 }
