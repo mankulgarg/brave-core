@@ -8,9 +8,11 @@
 #include "base/numerics/safe_conversions.h"
 #include "brave/browser/themes/brave_dark_mode_utils.h"
 #include "brave/browser/themes/theme_properties.h"
+#include "brave/components/sidebar/buildflags/buildflags.h"
 #include "chrome/browser/themes/theme_properties.h"
 #include "chrome/browser/ui/omnibox/omnibox_theme.h"
 #include "ui/gfx/color_palette.h"
+#include "ui/gfx/color_utils.h"
 #include "ui/native_theme/native_theme.h"
 
 #if defined(OS_LINUX)
@@ -104,6 +106,30 @@ SkColor BraveThemeHelper::GetDefaultColor(
   if (!incognito && (is_tor_ || is_guest_)) {
     incognito = true;
   }
+
+#if BUILDFLAG(ENABLE_SIDEBAR)
+  switch (id) {
+    case BraveThemeProperties::COLOR_SIDEBAR_BUTTON_BASE:
+    case BraveThemeProperties::COLOR_SIDEBAR_ARROW_NORMAL:
+    case BraveThemeProperties::COLOR_SIDEBAR_ARROW_DISABLED: {
+      const auto toolbar_color =
+          GetColor(ThemeProperties::COLOR_TOOLBAR, incognito, theme_supplier);
+      const auto base_button_color_light = MaybeGetDefaultColorForBraveUi(
+          id, incognito, is_tor_,
+          dark_mode::BraveDarkModeType::BRAVE_DARK_MODE_TYPE_LIGHT);
+      const auto base_button_color_dark = MaybeGetDefaultColorForBraveUi(
+          id, incognito, is_tor_,
+          dark_mode::BraveDarkModeType::BRAVE_DARK_MODE_TYPE_DARK);
+      DCHECK(base_button_color_light && base_button_color_dark);
+      return color_utils::PickContrastingColor(base_button_color_light.value(),
+                                               base_button_color_dark.value(),
+                                               toolbar_color);
+    }
+    default:
+      break;
+  }
+#endif
+
   const dark_mode::BraveDarkModeType type =
       dark_mode::GetActiveBraveDarkModeType();
   const absl::optional<SkColor> braveColor =

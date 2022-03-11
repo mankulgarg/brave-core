@@ -59,8 +59,6 @@ absl::optional<SkColor> MaybeGetDefaultColorForBraveLightUi(int id) {
     case BraveThemeProperties::COLOR_MENU_ITEM_SUB_TEXT_COLOR:
       return SkColorSetRGB(0x86, 0x8E, 0x96);
 #if BUILDFLAG(ENABLE_SIDEBAR)
-    case BraveThemeProperties::COLOR_SIDEBAR_BACKGROUND:
-      return SkColorSetRGB(0xF3, 0xF3, 0xF5);
     case BraveThemeProperties::COLOR_SIDEBAR_ARROW_BACKGROUND_HOVERED:
       return SkColorSetRGB(0xE3, 0xE3, 0xE3);
     case BraveThemeProperties::COLOR_SIDEBAR_ARROW_NORMAL:
@@ -165,8 +163,6 @@ absl::optional<SkColor> MaybeGetDefaultColorForBraveDarkUi(int id) {
     case BraveThemeProperties::COLOR_MENU_ITEM_SUB_TEXT_COLOR:
       return SkColorSetRGB(0x84, 0x88, 0x9C);
 #if BUILDFLAG(ENABLE_SIDEBAR)
-    case BraveThemeProperties::COLOR_SIDEBAR_BACKGROUND:
-      return kDarkToolbar;
     case BraveThemeProperties::COLOR_SIDEBAR_ARROW_BACKGROUND_HOVERED:
       return SkColorSetRGB(0x42, 0x45, 0x51);
     case BraveThemeProperties::COLOR_SIDEBAR_ARROW_DISABLED:
@@ -254,8 +250,6 @@ absl::optional<SkColor> MaybeGetDefaultColorForPrivateUi(int id) {
     case ThemeProperties::COLOR_TOOLBAR_BUTTON_ICON_INACTIVE:
       return color_utils::AlphaBlend(kDarkToolbarIcon, kPrivateToolbar, 0.3f);
 #if BUILDFLAG(ENABLE_SIDEBAR)
-    case BraveThemeProperties::COLOR_SIDEBAR_BACKGROUND:
-      return kPrivateToolbar;
     case BraveThemeProperties::COLOR_SIDEBAR_ARROW_BACKGROUND_HOVERED:
       return SkColorSetRGB(0x4B, 0x3E, 0x78);
     case BraveThemeProperties::COLOR_SIDEBAR_BORDER:
@@ -299,8 +293,6 @@ absl::optional<SkColor> MaybeGetDefaultColorForPrivateTorUi(int id) {
                                      kPrivateTorToolbar,
                                      0.3f);
 #if BUILDFLAG(ENABLE_SIDEBAR)
-    case BraveThemeProperties::COLOR_SIDEBAR_BACKGROUND:
-      return kPrivateTorToolbar;
     case BraveThemeProperties::COLOR_SIDEBAR_ARROW_BACKGROUND_HOVERED:
       return SkColorSetRGB(0x5F, 0x42, 0x6F);
     case BraveThemeProperties::COLOR_SIDEBAR_BORDER:
