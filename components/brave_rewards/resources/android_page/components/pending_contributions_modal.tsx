@@ -5,9 +5,10 @@
 import * as React from 'react'
 
 import Profile from '../../ui/components/profile/index'
-import { DetailRow } from '../../ui/components/tablePending/index'
+import { DetailRow, getTypeMessage } from '../../ui/components/tablePending/index'
 import { LocaleContext, formatMessage } from '../../shared/lib/locale_context'
 import { Modal, ModalCloseButton } from '../../shared/components/modal'
+import { NewTabLink } from '../../shared/components/new_tab_link'
 import Tokens from '../../ui/components/tokens/index'
 import { TrashIcon } from './icons/trash_icon'
 
@@ -20,7 +21,7 @@ interface Props {
 
 export function PendingContributionsModal (props: Props) {
   const { getString } = React.useContext(LocaleContext)
-  function getRow (row: DetailRow) {
+  function renderRow (row: DetailRow) {
     /* Each row is a grid
        ---------------------------------------------
        |   | 1(29px) | 2(1fr) |  3(1fr)  | 4(14px) |
@@ -33,7 +34,7 @@ export function PendingContributionsModal (props: Props) {
      return (
       <style.constributionsListItem>
         <style.contributionReceiver>
-          <a href={row.url} target={'_blank'}>
+          <NewTabLink href={row.url}>
             <Profile
               title={row.profile.name}
               provider={row.profile.provider}
@@ -41,7 +42,7 @@ export function PendingContributionsModal (props: Props) {
               src={row.profile.src}
               type='mobile'
             />
-          </a>
+          </NewTabLink>
         </style.contributionReceiver>
         <style.contributionDelete>
           <button onClick={row.onRemove}><TrashIcon /></button>
@@ -55,7 +56,7 @@ export function PendingContributionsModal (props: Props) {
           />
         </style.contributionAmount>
         <style.contributionType>
-          {getString(`pendingType${row.type}`)}
+          {getString(getTypeMessage(row.type))}
         </style.contributionType>
         <style.contributionDate>
           {
@@ -68,11 +69,7 @@ export function PendingContributionsModal (props: Props) {
     )
   }
 
-  function getRows (rows: DetailRow[]) {
-    return rows.map(getRow)
-  }
-
-  return (
+   return (
     <Modal>
       <style.root>
         <style.header>
@@ -83,7 +80,7 @@ export function PendingContributionsModal (props: Props) {
         </style.header>
         { props.rows && props.rows.length > 0
           ? <style.constributionsList>
-            {getRows(props.rows)}
+            {props.rows.map(renderRow)}
           </style.constributionsList>
           : <style.noContent>
             {getString('pendingContributionEmpty')}

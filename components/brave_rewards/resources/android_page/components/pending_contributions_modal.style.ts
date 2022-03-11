@@ -3,7 +3,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import styled from 'styled-components'
-import palette from 'brave-ui/theme/colors'
 
 export const root = styled.div`
   position: absolute;
@@ -97,8 +96,8 @@ export const contributionDelete = styled.div`
     text-align: center;
     width: 100%;
 
-    svg {
-      color: ${palette.grey500};
+    .icon {
+      color: var(--brave-palette-grey500);
       width: 14px;
       height: 16px;
       display: inline-block;
