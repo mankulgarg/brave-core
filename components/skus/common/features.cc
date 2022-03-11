@@ -11,12 +11,7 @@ namespace skus {
 namespace features {
 
 const base::Feature kSkusFeature {
-  "SkusFeature",
-#if defined(OS_IOS)
-      base::FEATURE_ENABLED_BY_DEFAULT
-#else
-      base::FEATURE_DISABLED_BY_DEFAULT
-#endif
+  "SkusFeature", base::FEATURE_ENABLED_BY_DEFAULT
 };
 
 }  // namespace features
