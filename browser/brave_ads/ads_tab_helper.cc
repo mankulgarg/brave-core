@@ -85,7 +85,7 @@ void AdsTabHelper::OnJavaScriptHtmlResult(base::Value value) {
   if (!value.is_string()) {
     return;
   }
-  std::string html = value.GetString();
+  const std::string& html = value.GetString();
   ads_service_->OnHtmlLoaded(tab_id_, redirect_chain_, html);
 }
 
@@ -97,7 +97,7 @@ void AdsTabHelper::OnJavaScriptTextResult(base::Value value) {
   if (!value.is_string()) {
     return;
   }
-  std::string text = value.GetString();
+  const std::string& text = value.GetString();
   ads_service_->OnTextLoaded(tab_id_, redirect_chain_, text);
 }
 
