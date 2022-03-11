@@ -75,6 +75,7 @@ class OperationalPatterns final {
 
   void SavePrefs();
   void LoadPrefs();
+  void ClearPrefs();
 
   std::string BuildPayload() const;
   std::string BuildDeletePayload() const;

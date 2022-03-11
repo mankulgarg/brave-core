@@ -118,6 +118,12 @@ void OperationalPatterns::SavePrefs() {
                          collection_id_expiration_time_);
 }
 
+void OperationalPatterns::ClearPrefs() {
+  pref_service_->ClearPref(kLastCheckedSlotPrefName);
+  pref_service_->ClearPref(kCollectionIdPrefName);
+  pref_service_->ClearPref(kCollectionIdExpirationPrefName);
+}
+
 void OperationalPatterns::OnCollectionSlotStartTimerFired() {
   simulate_local_training_step_timer_->Reset();
 }
@@ -188,7 +194,7 @@ void OperationalPatterns::OnDeleteUploadComplete(
   if (headers)
     response_code = headers->response_code();
   if (response_code == 200) {
-    ResetCollectionId();
+    ClearPrefs();
   } else {
     auto retry_timer = std::make_unique<base::RetainingOneShotTimer>();
     retry_timer->Start(FROM_HERE, base::Seconds(kMinutesBeforeRetry * 60), this,
